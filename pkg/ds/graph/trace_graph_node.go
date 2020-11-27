@@ -17,16 +17,16 @@ package graph
 type traceGraphNode struct {
 	service   string
 	operation string
-	inEdges   NodeMap
-	outEdges  NodeMap
+	inEdges   graphNodeMap
+	outEdges  graphNodeMap
 }
 
 func NewExecutionGraphNode(service, operation string) ExecutionGraphNode {
 	return &traceGraphNode{
 		service:   service,
 		operation: operation,
-		inEdges:   NewNodeMap(),
-		outEdges:  NewNodeMap(),
+		inEdges:   newNodeMap(),
+		outEdges:  newNodeMap(),
 	}
 }
 

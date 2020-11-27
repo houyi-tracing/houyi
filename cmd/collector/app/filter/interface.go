@@ -21,13 +21,23 @@ import (
 )
 
 type SpanFilter interface {
+	// Filter returns true if span meets the filter conditions, else false.
 	Filter(*model.Span) bool
+
+	// Update updates the filter conditions via new conditions.
 	Update(interface{})
+
+	// GetConditions returns the filter conditions.
 	GetConditions() interface{}
+
+	// Clear removes all filter conditions.
 	Clear()
 }
 
 type Factory interface {
+	// Initialize initializes factory via viper and sets the logger.
 	Initialize(viper *viper.Viper, logger *zap.Logger)
+
+	// CreateFilter returns a new SpanFilter pointer.
 	CreateFilter() SpanFilter
 }

@@ -21,7 +21,7 @@ import (
 
 type expirationTimer map[ExecutionGraphNode]time.Time
 
-func NewExpirationTimer() ExpirationTimer {
+func newExpirationTimer() nodeExpirationTimer {
 	eT := make(expirationTimer)
 	return &eT
 }

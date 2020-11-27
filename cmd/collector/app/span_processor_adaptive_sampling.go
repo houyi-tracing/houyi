@@ -15,6 +15,7 @@
 package app
 
 import (
+	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/sampling"
 	"github.com/houyi-tracing/houyi/pkg/ds/graph"
 	"github.com/jaegertracing/jaeger/cmd/collector/app"
@@ -22,7 +23,6 @@ import (
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/pkg/queue"
 	"github.com/jaegertracing/jaeger/storage/spanstore"
-	filter "github.com/yan-fuhai/adaptive-sampling-tracing/cmd/collector/app/filter"
 	"github.com/yan-fuhai/go-ds/cache"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"

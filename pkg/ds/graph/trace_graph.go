@@ -28,8 +28,8 @@ const (
 
 type traceGraph struct {
 	lock     sync.RWMutex // make trace graph to be thread-safe
-	nodes    NodeMap
-	timer    ExpirationTimer
+	nodes    graphNodeMap
+	timer    nodeExpirationTimer
 	duration time.Duration
 	logger   *zap.Logger
 
@@ -43,8 +43,8 @@ type traceGraph struct {
 
 func NewExecutionGraph(logger *zap.Logger, duration time.Duration) *traceGraph {
 	return &traceGraph{
-		nodes:    NewNodeMap(),
-		timer:    NewExpirationTimer(),
+		nodes:    newNodeMap(),
+		timer:    newExpirationTimer(),
 		duration: duration,
 		logger:   logger,
 		fakeRoot: NewExecutionGraphNode(defaultRootParentService, defaultRootParentOperation),
@@ -199,24 +199,31 @@ func (t *traceGraph) removeNode(node ExecutionGraphNode) {
 		to.RemoveIn(node)
 	}
 
-	// remove node
+	// remove node from node map
 	t.nodes.Remove(node)
 
-	// remove timer
+	// remove node from timer
 	t.timer.Remove(node)
 }
 
 func (t *traceGraph) searchRoots(node ExecutionGraphNode, roots []ExecutionGraphNode, hasSearched set.Set) []ExecutionGraphNode {
-	// fakeRoot is used to mark some trace graph node as roots.
+	if hasSearched.Has(node) {
+		t.logger.Fatal("cycled call found",
+			zap.String("current service", node.Service()),
+			zap.String("current operation", node.Operation()))
+		return roots
+	}
+
 	hasSearched.Add(node)
 
+	// fakeRoot is used to mark some trace graph node as roots.
 	if node.OutN() == 0 || node.HasOut(t.fakeRoot) {
 		roots = append(roots, node)
 	}
 
 	if node.OutN() != 0 {
 		for _, next := range node.GetOuts() {
-			if next != t.fakeRoot && !hasSearched.Has(next) {
+			if next != t.fakeRoot {
 				roots = t.searchRoots(next, roots, hasSearched)
 			}
 		}

@@ -88,7 +88,8 @@ type ServerConfiguration struct {
 
 // HTTPServerConfiguration holds config for a server providing sampling strategies and baggage restrictions to clients
 type HTTPServerConfiguration struct {
-	HostPort              string `yaml:"hostPort" validate:"nonzero"`
+	HostPort string `yaml:"hostPort" validate:"nonzero"`
+	// Add this filed to transfer request for pulling sampling strategies from clients to collector. [Houyi Tracing]
 	CollectorHttpHostPort string `yaml:"hostPort" validate:"nonzero"`
 }
 
@@ -237,15 +238,3 @@ type ProxyBuilderOptions struct {
 
 // CollectorProxyBuilder is a func which builds CollectorProxy.
 type CollectorProxyBuilder func(ProxyBuilderOptions) (app.CollectorProxy, error)
-
-// CreateCollectorProxy creates collector proxy
-func CreateCollectorProxy(
-	opts ProxyBuilderOptions,
-	builders map[reporter.Type]CollectorProxyBuilder,
-) (app.CollectorProxy, error) {
-	builder, ok := builders[opts.ReporterType]
-	if !ok {
-		return nil, fmt.Errorf("unknown reporter type %s", string(opts.ReporterType))
-	}
-	return builder(opts)
-}

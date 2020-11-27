@@ -20,31 +20,21 @@ import (
 	"sync"
 )
 
-type Interface interface {
-	Add(interface{})
-	Find(interface{}) interface{}
-	Has(interface{}) bool
-	Union(interface{}, interface{}) error
-	GetAll() []interface{}
-	Size() int
-	Remove(interface{})
-}
-
-// UnionFind is a data structure that stores a collection of disjoint (non-overlapping) sets.
-type UnionFind struct {
+// unionFind is a data structure that stores a collection of disjoint (non-overlapping) sets.
+type unionFind struct {
 	m  map[interface{}]interface{}
 	mu *sync.RWMutex
 }
 
-func NewUnionFind() *UnionFind {
-	return &UnionFind{
+func NewUnionFind() UnionFind {
+	return &unionFind{
 		m:  make(map[interface{}]interface{}),
 		mu: new(sync.RWMutex),
 	}
 }
 
 // GetAll returns a slice contains all elements in union-find.
-func (uf *UnionFind) GetAll() []interface{} {
+func (uf *unionFind) GetAll() []interface{} {
 	uf.mu.RLock()
 	defer uf.mu.RUnlock()
 
@@ -57,7 +47,7 @@ func (uf *UnionFind) GetAll() []interface{} {
 
 // Add adds a new element into this union-find as a disjoint set.
 // If the element is already in union-find, this operation would be ignored.
-func (uf *UnionFind) Add(v interface{}) {
+func (uf *unionFind) Add(v interface{}) {
 	uf.mu.Lock()
 	defer uf.mu.Unlock()
 
@@ -67,7 +57,7 @@ func (uf *UnionFind) Add(v interface{}) {
 }
 
 // Find returns the representative of the set v belongs to.
-func (uf *UnionFind) Find(v interface{}) interface{} {
+func (uf *unionFind) Find(v interface{}) interface{} {
 	uf.mu.Lock()
 	defer uf.mu.Unlock()
 
@@ -80,7 +70,7 @@ func (uf *UnionFind) Find(v interface{}) interface{} {
 }
 
 // Has return true if v exist in union-find, else false.
-func (uf *UnionFind) Has(v interface{}) bool {
+func (uf *unionFind) Has(v interface{}) bool {
 	uf.mu.RLock()
 	defer uf.mu.RUnlock()
 
@@ -92,7 +82,7 @@ func (uf *UnionFind) Has(v interface{}) bool {
 }
 
 // Union merges the two sets containing a and b, respectively.
-func (uf *UnionFind) Union(v1 interface{}, v2 interface{}) error {
+func (uf *unionFind) Union(v1 interface{}, v2 interface{}) error {
 	uf.mu.Lock()
 	defer uf.mu.Unlock()
 
@@ -110,7 +100,7 @@ func (uf *UnionFind) Union(v1 interface{}, v2 interface{}) error {
 }
 
 // Size returns the number of elements in union-find.
-func (uf *UnionFind) Size() int {
+func (uf *unionFind) Size() int {
 	uf.mu.RLock()
 	defer uf.mu.RUnlock()
 
@@ -119,7 +109,7 @@ func (uf *UnionFind) Size() int {
 
 // Remove removes an exist element in union-find.
 // If the element to be removed is the representative of a set, all elements in that set would be removed.
-func (uf *UnionFind) Remove(toRemoved interface{}) {
+func (uf *unionFind) Remove(toRemoved interface{}) {
 	uf.mu.Lock()
 	defer uf.mu.Unlock()
 
@@ -132,7 +122,7 @@ func (uf *UnionFind) Remove(toRemoved interface{}) {
 	}
 }
 
-func (uf *UnionFind) find(v interface{}) (interface{}, error) {
+func (uf *unionFind) find(v interface{}) (interface{}, error) {
 	if parent, has := uf.m[v]; has {
 		if parent != v {
 			uf.m[v], _ = uf.find(parent) // path compression

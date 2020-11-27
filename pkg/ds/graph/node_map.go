@@ -19,7 +19,7 @@ import "fmt"
 // service -> operation -> trace graph node
 type nodeMap map[string]map[string]ExecutionGraphNode
 
-func NewNodeMap() *nodeMap {
+func newNodeMap() graphNodeMap {
 	ret := make(nodeMap)
 	return &ret
 }

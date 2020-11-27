@@ -83,7 +83,7 @@ func TestHas(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
-		go func(uf *UnionFind, wg *sync.WaitGroup) {
+		go func(uf UnionFind, wg *sync.WaitGroup) {
 			defer wg.Done()
 
 			uf.Has(1)

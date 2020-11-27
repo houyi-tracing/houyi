@@ -17,9 +17,9 @@ package app
 
 import (
 	"context"
+	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/sampling"
 	houyi "github.com/houyi-tracing/houyi/cmd/collector/app/server"
-	"github.com/yan-fuhai/adaptive-sampling-tracing/cmd/collector/app/filter"
 	"io"
 	"net/http"
 	"time"
