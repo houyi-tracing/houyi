@@ -41,3 +41,13 @@ In contrast, for a trace with a lower QPS, the sampling rate would be higher.
 
 Houyi would store the execution path of all traces, and it would dynamically update the execution path due to 
 the unpredictable changes of state (deployment, uninstall, shutdown, etc) of microservices in system.
+
+## How to Build
+
+Change to the directory of this project and run the below command:
+ 
+```shell
+./build.sh
+```
+
+`build.sh` would build agent and collector and move them to `$HOME/houyi/bin`. 
