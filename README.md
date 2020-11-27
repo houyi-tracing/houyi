@@ -6,6 +6,11 @@ is a distributed tracing tool implemented by Golang.
 The biggest difference between Houyi and other tracing tools is that Houyi implements
  adaptive sampling for making sampling decision in a completely new way.
  
+Houyi contains two component:
+
+- Agent: Receives spans from Houyi client and transfer the requests for pulling sampling strategies from Houyi clients to Houyi collector.
+- Collector: Receives spans and requests for pulling sampling strategies from Houyi Agent .
+
 ## Features
 
 ### Span Filtering
