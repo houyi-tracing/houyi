@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# make directories
 mkdir ~/houyi
 mkdir ~/houyi/bin
 mkdir ~/houyi/build
