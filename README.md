@@ -13,6 +13,11 @@ Houyi contains two component:
 
 ## Features
 
+### Adaptive Sampling
+
+A trace with a higher QPS would gain a lower sample rate. 
+In contrast, for a trace with a lower QPS, the sampling rate would be higher.
+
 ### Span Filtering
 
 By providing filter conditions, Houyi would increase the sampling rates of spans that meet the filter conditions.
@@ -31,11 +36,6 @@ An example of filter conditions (filter span by tags):
   ]
 }
 ```
-
-### Adaptive Sampling
-
-A trace with a higher QPS would gain a lower sample rate. 
-In contrast, for a trace with a lower QPS, the sampling rate would be higher.
 
 ### Dynamical Update of Execution Path
 
