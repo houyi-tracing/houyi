@@ -17,7 +17,7 @@
 package httpserver
 
 import (
-	handler2 "github.com/yan-fuhai/adaptive-sampling-tracing/cmd/agent/app/handler"
+	handler2 "github.com/houyi-tracing/houyi/cmd/agent/app/handler"
 	"net/http"
 
 	"github.com/gorilla/mux"
