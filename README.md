@@ -32,7 +32,7 @@ An example of filter conditions (filter span by tags):
 A trace with a higher QPS would gain a lower sample rate. 
 In contrast, for a trace with a lower QPS, the sampling rate would be higher.
 
-### Dynamically Updating for Execution Path
+### Dynamical Update of Execution Path
 
 Houyi would store the execution path of all traces, and it would dynamically update the execution path due to 
 the unpredictable changes of state (deployment, uninstall, shutdown, etc) of microservices in system.
