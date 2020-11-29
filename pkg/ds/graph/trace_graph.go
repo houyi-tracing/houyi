@@ -33,7 +33,7 @@ type traceGraph struct {
 	duration time.Duration
 	logger   *zap.Logger
 
-	// fakeRoot is used to mark some trace graph node as true roots.
+	// fakeRoot is used to mark some trace graph nodes as true roots.
 	// True roots have below features:
 	//  1. The operation of those roots would be called by other operations,
 	//  2. Or, the operation of those roots would be called directly by user requests.
