@@ -187,6 +187,15 @@ func (t *traceGraph) Size() int {
 	return t.nodes.Size()
 }
 
+func (t *traceGraph) Refresh(node ExecutionGraphNode) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	if t.nodes.Has(node) {
+		t.timer.Timing(node, t.duration)
+	}
+}
+
 func (t *traceGraph) has(svc, op string) bool {
 	if node, err := t.nodes.Get(svc, op); node != nil && err == nil {
 		t.timer.Timing(node, t.duration)

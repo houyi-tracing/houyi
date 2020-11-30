@@ -97,6 +97,9 @@ type ExecutionGraph interface {
 
 	// Size returns the number of operations in this graph.
 	Size() int
+
+	// Refresh reset the timer for inputted node.
+	Refresh(node ExecutionGraphNode)
 }
 
 type nodeExpirationTimer interface {
