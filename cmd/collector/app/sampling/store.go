@@ -169,14 +169,14 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 				ass.logger.Error("failed to get sampling rate for alive operation",
 					zap.Stringer("operation", op))
 			}
-
-			if node, err := ass.traceGraph.GetNode(service, op.Name); err == nil {
-				ass.traceGraph.Refresh(node)
-				ass.logger.Debug("refresh operation", zap.Stringer("operation", node))
-			}
 		} else {
 			strategies = append(strategies, ass.newOperationSamplingStrategy(service, op.Name, ass.MinSamplingProbability))
 			ass.logger.Debug("operation is not root", zap.String("operation", op.String()))
+		}
+
+		if node, err := ass.traceGraph.GetNode(service, op.Name); err == nil {
+			ass.traceGraph.Refresh(node)
+			ass.logger.Debug("refresh operation", zap.Stringer("operation", node))
 		}
 	}
 
