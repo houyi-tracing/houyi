@@ -108,9 +108,9 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 				upSince: time.Now(),
 			}
 			hasNewOperation = true
-			ass.logger.Debug("new op",
+			ass.logger.Debug("new operation",
 				zap.String("service", service),
-				zap.String("op", op.Name))
+				zap.String("operation", op.Name))
 		}
 	}
 
@@ -182,7 +182,7 @@ func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service string, op
 		}
 	}
 
-	ass.maxRemoteRefreshInterval = maxDuration(ass.maxRemoteRefreshInterval, interval)
+	ass.maxRemoteRefreshInterval = maxDuration(ass.maxRemoteRefreshInterval, interval+time.Minute)
 }
 
 // rebuildSSTOutputCache must be called after each time of pruning, adding or promoting operations to SST.
