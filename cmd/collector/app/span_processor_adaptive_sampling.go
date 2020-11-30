@@ -160,7 +160,9 @@ func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
 		})
 	} else {
 		sp.traceGraph.AddRoot(node)
-		sp.logger.Debug("new root operation", zap.String("operation name", span.OperationName))
+		sp.logger.Debug("new root operation",
+			zap.String("service", svc),
+			zap.String("operation", span.OperationName))
 	}
 }
 
