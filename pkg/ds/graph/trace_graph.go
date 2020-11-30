@@ -208,7 +208,7 @@ func (t *traceGraph) removeNode(node ExecutionGraphNode) {
 
 func (t *traceGraph) searchRoots(node ExecutionGraphNode, roots []ExecutionGraphNode, hasSearched set.Set) []ExecutionGraphNode {
 	if hasSearched.Has(node) {
-		t.logger.Fatal("cycled call found",
+		t.logger.Error("cycled call found",
 			zap.String("current service", node.Service()),
 			zap.String("current operation", node.Operation()))
 		return roots
