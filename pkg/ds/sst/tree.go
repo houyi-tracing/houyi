@@ -108,9 +108,11 @@ func (t *sampleStrategyTree) Remove(service, operation string) {
 			t.logger.Fatal("for removing operation, the tree node relate to it to remove must be leaf node",
 				zap.String("service", service),
 				zap.String("operation", operation))
+			return
 		}
 		parent := toRmNode.Parent()
 		parent.RemoveChild(toRmNode)
+		parent.PathDepression()
 		t.nodeMap.Delete(service, operation)
 	}
 }
