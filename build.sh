@@ -3,7 +3,6 @@
 # make directories
 mkdir ~/houyi
 mkdir ~/houyi/bin
-mkdir ~/houyi/build
 
 # build collector
 cd ./cmd/collector || exit
