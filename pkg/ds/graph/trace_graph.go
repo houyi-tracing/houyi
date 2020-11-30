@@ -139,9 +139,11 @@ func (t *traceGraph) HasEdge(from, to ExecutionGraphNode) bool {
 	return from.HasOut(to) && to.HasIn(from)
 }
 
-func (t *traceGraph) RemoveExpired() {
+func (t *traceGraph) RemoveExpired() []ExecutionGraphNode {
 	t.lock.Lock()
 	defer t.lock.Unlock()
+
+	removedNodes := make([]ExecutionGraphNode, 0)
 
 	for _, node := range t.nodes.AllNodes() {
 		if expired, err := t.timer.IsExpired(node); expired && err == nil {
@@ -149,14 +151,18 @@ func (t *traceGraph) RemoveExpired() {
 			t.logger.Debug("remove expired node in trace graph",
 				zap.String("service", node.Service()),
 				zap.String("operation", node.Operation()))
+			removedNodes = append(removedNodes, node)
 		} else {
 			if err != nil {
 				t.logger.Error(
 					"graph contains node but the node does not exist in timer",
-					zap.Error(err))
+					zap.Error(err),
+					zap.Stringer("node", node))
 			}
 		}
 	}
+
+	return removedNodes
 }
 
 func (t *traceGraph) Remove(rmNode ExecutionGraphNode) {

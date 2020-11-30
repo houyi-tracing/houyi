@@ -16,7 +16,6 @@ package sampling
 
 import (
 	"go.uber.org/zap"
-	"log"
 	"testing"
 	"time"
 )
@@ -30,7 +29,5 @@ func TestRun(t *testing.T) {
 		SamplingRefreshInterval: time.Minute * 5,
 	}, &zap.Logger{})
 
-	if err := ass.Start(); err != nil {
-		log.Println(err)
-	}
+	ass.RemoveExpired()
 }

@@ -25,6 +25,13 @@ import (
 type AdaptiveStrategyStore interface {
 	strategystore.StrategyStore
 
+	Add(*model2.Operation)
+	AddEdge(from *model2.Operation, to *model2.Operation) error
+	AddAsRoot(*model2.Operation)
+	GetRoots(*model2.Operation) ([]*model2.Operation, error)
+	Remove(*model2.Operation) error
+	RemoveExpired()
+
 	// GetSamplingStrategies returns sampling strategies of operations of inputted service and refresh the maximum
 	// sampling pulling interval via the inputted interval.
 	GetSamplingStrategies(string, model2.Operations, time.Duration) (*sampling.SamplingStrategyResponse, error)
@@ -32,7 +39,4 @@ type AdaptiveStrategyStore interface {
 	// Promote promotes the level of operation relate to inputted span. As a result, the sampling rate of this operation
 	// would be increased if the operation is not at the top level of sampling strategy tree.
 	Promote(*model.Span)
-
-	Start() error
-	Close() error
 }

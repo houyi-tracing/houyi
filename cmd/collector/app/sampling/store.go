@@ -16,7 +16,9 @@ package sampling
 
 import (
 	"context"
+	"fmt"
 	model2 "github.com/houyi-tracing/houyi/cmd/collector/app/sampling/model"
+	"github.com/houyi-tracing/houyi/pkg/ds/graph"
 	"github.com/houyi-tracing/houyi/pkg/ds/sst"
 	"github.com/jaegertracing/jaeger/model"
 	"github.com/jaegertracing/jaeger/thrift-gen/sampling"
@@ -33,25 +35,24 @@ type qpsEntry struct {
 
 // adaptiveStrategyStore indirectly stores sampling probability of services in the tree structure.
 type adaptiveStrategyStore struct {
-	sync.RWMutex
 	Options
 
+	mux                      sync.RWMutex
 	logger                   *zap.Logger
 	sst                      sst.SampleStrategyTree
-	srCache                  map[string]map[string]float64 // sampling rates cache generated from SST
+	traceGraph               graph.ExecutionGraph
 	qps                      map[string]map[string]*qpsEntry
-	stopCh                   chan struct{}
 	maxRemoteRefreshInterval time.Duration
 }
 
 func NewAdaptiveStrategyStore(opts Options, logger *zap.Logger) AdaptiveStrategyStore {
 	retMe := &adaptiveStrategyStore{
+		mux:                      sync.RWMutex{},
 		Options:                  opts,
 		logger:                   logger,
 		maxRemoteRefreshInterval: opts.SamplingRefreshInterval,
+		traceGraph:               graph.NewExecutionGraph(logger, opts.OperationDuration),
 		sst:                      sst.NewSampleStrategyTree(opts.MaxNumChildNodes, logger),
-		srCache:                  make(map[string]map[string]float64),
-		stopCh:                   make(chan struct{}),
 		qps:                      make(map[string]map[string]*qpsEntry),
 	}
 	if retMe.MaxSamplingProbability > 1.0 {
@@ -63,25 +64,88 @@ func NewAdaptiveStrategyStore(opts Options, logger *zap.Logger) AdaptiveStrategy
 	return retMe
 }
 
-func (ass *adaptiveStrategyStore) GetSamplingStrategy(_ context.Context, service string) (*sampling.SamplingStrategyResponse, error) {
-	ass.Lock()
-	defer ass.Unlock()
+func (ass *adaptiveStrategyStore) Add(operation *model2.Operation) {
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
 
-	if !ass.sst.HasService(service) {
-		ass.sst.AddService(service)
+	svc, op := operation.Service, operation.Name
+	ass.traceGraph.Add(svc, op)
+}
+
+func (ass *adaptiveStrategyStore) AddAsRoot(operation *model2.Operation) {
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
+
+	svc, op := operation.Service, operation.Name
+	ass.traceGraph.Add(svc, op)
+	ass.sst.Add(svc, op)
+}
+
+func (ass *adaptiveStrategyStore) AddEdge(from, to *model2.Operation) error {
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
+
+	if ass.traceGraph.Has(from.Service, from.Name) && ass.traceGraph.Has(to.Service, to.Name) {
+		fromNode, _ := ass.traceGraph.GetNode(from.Service, from.Name)
+		toNode, _ := ass.traceGraph.GetNode(to.Service, to.Name)
+		ass.traceGraph.AddEdge(fromNode, toNode)
+		return nil
+	} else {
+		return fmt.Errorf("add edge for operation not in trace graph")
 	}
-	strategies := make([]*sampling.OperationSamplingStrategy, 0, len(ass.srCache[service]))
-	for op, sr := range ass.srCache[service] {
-		strategies = append(strategies, ass.newOperationSamplingStrategy(service, op, sr))
+}
+
+func (ass *adaptiveStrategyStore) GetRoots(operation *model2.Operation) ([]*model2.Operation, error) {
+	ass.mux.RLock()
+	defer ass.mux.RUnlock()
+
+	ret := make([]*model2.Operation, 0)
+	svc, op := operation.Service, operation.Name
+	if node, err := ass.traceGraph.GetNode(svc, op); err == nil {
+		roots := ass.traceGraph.GetRootsOf(node)
+		for _, r := range roots {
+			ret = append(ret, &model2.Operation{
+				Service: r.Service(),
+				Name:    r.Operation(),
+			})
+		}
+		return ret, nil
+	} else {
+		return ret, err
 	}
+}
+
+func (ass *adaptiveStrategyStore) Remove(operation *model2.Operation) error {
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
+
+	svc, op := operation.Service, operation.Name
+	ass.sst.Remove(svc, op)
+
+	if node, err := ass.traceGraph.GetNode(svc, op); err == nil {
+		ass.traceGraph.Remove(node)
+		return nil
+	} else {
+		return err
+	}
+}
+
+func (ass *adaptiveStrategyStore) RemoveExpired() {
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
+
+	rmNodes := ass.traceGraph.RemoveExpired()
+	for _, node := range rmNodes {
+		ass.sst.Remove(node.Service(), node.Operation())
+	}
+}
+
+func (ass *adaptiveStrategyStore) GetSamplingStrategy(_ context.Context, _ string) (*sampling.SamplingStrategyResponse, error) {
+	// deprecated
 	resp := &sampling.SamplingStrategyResponse{
-		StrategyType: sampling.SamplingStrategyType_PROBABILISTIC,
-		OperationSampling: &sampling.PerOperationSamplingStrategies{
-			DefaultSamplingProbability: ass.MinSamplingProbability,
-			PerOperationStrategies:     strategies,
-		},
+		StrategyType:          sampling.SamplingStrategyType_PROBABILISTIC,
+		ProbabilisticSampling: &sampling.ProbabilisticSamplingStrategy{SamplingRate: DefaultMinSamplingProbability},
 	}
-
 	return resp, nil
 }
 
@@ -89,44 +153,25 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 	service string,
 	operations model2.Operations,
 	refreshInterval time.Duration) (*sampling.SamplingStrategyResponse, error) {
-	ass.Lock()
-	defer ass.Unlock()
-
-	if !ass.sst.HasService(service) {
-		ass.sst.AddService(service)
-	}
-
-	hasNewOperation := false
-	for _, op := range operations.Operations {
-		if !ass.sst.Has(service, op.Name) {
-			ass.sst.Add(service, op.Name)
-			if _, has := ass.qps[service]; !has {
-				ass.qps[service] = make(map[string]*qpsEntry)
-			}
-			ass.qps[service][op.Name] = &qpsEntry{
-				qps:     op.Qps,
-				upSince: time.Now(),
-			}
-			hasNewOperation = true
-			ass.logger.Debug("new operation",
-				zap.String("service", service),
-				zap.String("operation", op.Name))
-		}
-	}
-
-	if hasNewOperation {
-		ass.rebuildSSTOutputCache()
-	}
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
 
 	// before generate strategies, we must update QPS of inputted operations.
 	ass.updateQpsAndRefreshInterval(service, operations.Operations, refreshInterval)
 
 	strategies := make([]*sampling.OperationSamplingStrategy, 0, len(operations.Operations))
 	for _, op := range operations.Operations {
-		if sr, has := ass.srCache[service][op.Name]; has {
-			strategies = append(strategies, ass.newOperationSamplingStrategy(service, op.Name, sr))
+		if ass.sst.Has(op.Service, op.Name) {
+			if sr, err := ass.sst.GetOperationSamplingRate(op.Service, op.Name); err == nil {
+				strategies = append(strategies,
+					ass.newOperationSamplingStrategy(service, op.Name, sr))
+			} else {
+				ass.logger.Error("failed to get sampling rate for alive operation",
+					zap.Stringer("operation", op))
+			}
 		} else {
-			ass.logger.Fatal("operation not exist in sst output cache", zap.String("operation", op.Name))
+			strategies = append(strategies, ass.newOperationSamplingStrategy(service, op.Name, ass.MinSamplingProbability))
+			ass.logger.Debug("operation is not root", zap.String("operation", op.String()))
 		}
 	}
 
@@ -140,26 +185,17 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 }
 
 func (ass *adaptiveStrategyStore) Promote(span *model.Span) {
-	ass.Lock()
-	defer ass.Unlock()
+	ass.mux.Lock()
+	defer ass.mux.Unlock()
 
-	serviceName := span.GetProcess().GetServiceName()
-	_ = ass.sst.Promote(serviceName, span.OperationName)
-	ass.rebuildSSTOutputCache()
-}
-
-func (ass *adaptiveStrategyStore) Start() error {
-	ass.refresh(ass.TreeRefreshInterval)
-	ass.logger.Info("Started adaptive strategy sst",
-		zap.Float64("max sampling probability", ass.MaxSamplingProbability),
-		zap.Float64("min sampling probability", ass.MinSamplingProbability),
-		zap.Int("max number of child nodes in SST", ass.MaxNumChildNodes))
-	return nil
-}
-
-func (ass *adaptiveStrategyStore) Close() error {
-	close(ass.stopCh)
-	return nil
+	// promote the sampling rates of all roots of the node relate to inputted span.
+	svc, op := span.GetProcess().GetServiceName(), span.GetOperationName()
+	if node, err := ass.traceGraph.GetNode(svc, op); err == nil {
+		roots := ass.traceGraph.GetRootsOf(node)
+		for _, r := range roots {
+			_ = ass.sst.Promote(r.Service(), r.Operation())
+		}
+	}
 }
 
 // updateQpsAndRefreshInterval updates the QPS and sampling refresh interval of inputted service.
@@ -183,56 +219,6 @@ func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service string, op
 	}
 
 	ass.maxRemoteRefreshInterval = maxDuration(ass.maxRemoteRefreshInterval, interval+time.Minute)
-}
-
-// rebuildSSTOutputCache must be called after each time of pruning, adding or promoting operations to SST.
-func (ass *adaptiveStrategyStore) rebuildSSTOutputCache() {
-	ass.srCache = ass.sst.GetSamplingRate()
-}
-
-func (ass *adaptiveStrategyStore) prune() {
-	ass.Lock()
-	defer ass.Unlock()
-
-	ass.sst.Prune(ass.MinSamplingProbability)
-	now := time.Now()
-
-	for svc, opMap := range ass.qps {
-		for op, qE := range opMap {
-			if now.Sub(qE.upSince) > ass.maxRemoteRefreshInterval {
-				if innerOpMap, ok := ass.srCache[svc]; ok {
-					delete(innerOpMap, op)
-				}
-				delete(ass.qps[svc], op)
-				ass.sst.Remove(svc, op)
-				ass.logger.Debug("removed expired operation.",
-					zap.String("service", svc),
-					zap.String("operation", op))
-			}
-		}
-	}
-
-	ass.maxRemoteRefreshInterval = time.Duration(
-		float64(ass.maxRemoteRefreshInterval.Nanoseconds()) * ass.SamplingRefreshIntervalShrinkageRate)
-}
-
-// refresh refresh response cache and QPS periodically.
-func (ass *adaptiveStrategyStore) refresh(interval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				ass.prune()
-				ass.logger.Debug("report strategy sst",
-					zap.Int("operations", len(ass.qps)),
-					zap.Duration("max refresh interval", ass.maxRemoteRefreshInterval))
-			case <-ass.stopCh:
-				return
-			}
-		}
-	}()
 }
 
 // qpsWeightCoefficient returns the weight Coefficient of service.

@@ -18,8 +18,6 @@ package app
 
 import (
 	"flag"
-	"time"
-
 	"github.com/spf13/viper"
 
 	"github.com/jaegertracing/jaeger/cmd/flags"
@@ -51,7 +49,6 @@ const (
 	// Adaptive sampling
 	collectorLruCapacity          = "sampling.span.processor.lru-capacity"
 	collectorMaxRetries           = "sampling.span.processor.max-retires"
-	collectorOperationDuration    = "sampling.span.processor.operation-duration"
 	collectorRetryQueueNumWorkers = "sampling.span.processor.retry-queue-num-workers"
 )
 
@@ -90,7 +87,6 @@ type CollectorOptions struct {
 type AdaptiveSamplingOptions struct {
 	LruCapacity          int
 	MaxRetries           int
-	OperationDuration    time.Duration
 	RetryQueueNumWorkers int
 }
 
@@ -111,8 +107,7 @@ func AddFlags(flags *flag.FlagSet) {
 }
 
 func AddAdaptiveSamplingFlags(flags *flag.FlagSet) {
-	flags.Int(collectorMaxRetries, DefaultMaxRetires, "Maximum retires for span to update trace graph")
-	flags.Duration(collectorOperationDuration, DefaultOperationDuration, "Duration of operation in trace gragh")
+	flags.Int(collectorMaxRetries, DefaultMaxRetries, "Maximum retires for span to update trace graph")
 	flags.Int(collectorLruCapacity, DefaultLruCapacity,
 		"Capacity of LRU storing key-pairs (spanID -> operationName)")
 	flags.Int(collectorRetryQueueNumWorkers, DefaultRetryQueueNumWorkers, "Number of workers consuming retry queue in span processor")
@@ -146,7 +141,6 @@ func (cOpts *CollectorOptions) InitFromViper(v *viper.Viper) *CollectorOptions {
 	// Adaptive sampling
 	cOpts.MaxRetries = v.GetInt(collectorMaxRetries)
 	cOpts.LruCapacity = v.GetInt(collectorLruCapacity)
-	cOpts.OperationDuration = v.GetDuration(collectorOperationDuration)
 	cOpts.RetryQueueNumWorkers = v.GetInt(collectorRetryQueueNumWorkers)
 	return cOpts
 }

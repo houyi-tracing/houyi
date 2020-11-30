@@ -14,6 +14,8 @@
 
 package graph
 
+import "fmt"
+
 type traceGraphNode struct {
 	service   string
 	operation string
@@ -84,4 +86,8 @@ func (tgn *traceGraphNode) InN() int {
 
 func (tgn *traceGraphNode) OutN() int {
 	return tgn.outEdges.Size()
+}
+
+func (tgn *traceGraphNode) String() string {
+	return fmt.Sprintf("node=(service:%s,operation:%s]", tgn.service, tgn.operation)
 }

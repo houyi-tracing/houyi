@@ -105,7 +105,7 @@ func (t *sampleStrategyTree) GetOperationSamplingRate(service, operation string)
 func (t *sampleStrategyTree) Remove(service, operation string) {
 	if toRmNode, err := t.nodeMap.GetNode(service, operation); err == nil {
 		if !toRmNode.IsLeaf() {
-			t.logger.Fatal("for removing operation, the tree node relate to it to remove must be leaf node",
+			t.logger.Error("for removing operation, the tree node relate to it to remove must be leaf node",
 				zap.String("service", service),
 				zap.String("operation", operation))
 			return

@@ -52,7 +52,7 @@ func TestNewCollector(t *testing.T) {
 	collectorOpts := &CollectorOptions{}
 
 	// test
-	c.Start(collectorOpts)
+	_ = c.Start(collectorOpts)
 
 	// verify
 	assert.NoError(t, c.Close())
@@ -61,7 +61,31 @@ func TestNewCollector(t *testing.T) {
 type mockStrategyStore struct {
 }
 
-func (m *mockStrategyStore) GetSamplingStrategies(s string, operations model2.Operations, duration time.Duration) (*sampling.SamplingStrategyResponse, error) {
+func (m *mockStrategyStore) Add(_ *model2.Operation) {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) AddEdge(_ *model2.Operation, _ *model2.Operation) error {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) AddAsRoot(_ *model2.Operation) {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) GetRoots(_ *model2.Operation) ([]*model2.Operation, error) {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) Remove(_ *model2.Operation) error {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) RemoveExpired() {
+	panic("implement me")
+}
+
+func (m *mockStrategyStore) GetSamplingStrategies(_ string, _ model2.Operations, _ time.Duration) (*sampling.SamplingStrategyResponse, error) {
 	return &sampling.SamplingStrategyResponse{}, nil
 }
 
@@ -77,7 +101,7 @@ func (m *mockStrategyStore) Close() error {
 	return nil
 }
 
-func (m *mockStrategyStore) GetSamplingStrategy(_ context.Context, serviceName string) (*sampling.SamplingStrategyResponse, error) {
+func (m *mockStrategyStore) GetSamplingStrategy(_ context.Context, _ string) (*sampling.SamplingStrategyResponse, error) {
 	return &sampling.SamplingStrategyResponse{}, nil
 }
 
@@ -104,8 +128,7 @@ func TestCollector_PublishOpts(t *testing.T) {
 		QueueSize:  42,
 	}
 
-	c.Start(collectorOpts)
-	defer c.Close()
+	_ = c.Start(collectorOpts)
 
 	forkFactory.AssertGaugeMetrics(t, metricstest.ExpectedMetric{
 		Name:  "internal.collector.num-workers",
@@ -115,4 +138,6 @@ func TestCollector_PublishOpts(t *testing.T) {
 		Name:  "internal.collector.queue-size",
 		Value: 42,
 	})
+
+	_ = c.Close()
 }

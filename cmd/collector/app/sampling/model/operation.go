@@ -14,11 +14,18 @@
 
 package model
 
+import "fmt"
+
 type Operations struct {
 	Operations []Operation `json:"operations"`
 }
 
 type Operation struct {
-	Name string  `json:"name"`
-	Qps  float64 `json:"qps"`
+	Service string  `json:"service"`
+	Name    string  `json:"name"`
+	Qps     float64 `json:"qps"`
+}
+
+func (op Operation) String() string {
+	return fmt.Sprintf("operation=[service:%s, name: %s]", op.Service, op.Name)
 }

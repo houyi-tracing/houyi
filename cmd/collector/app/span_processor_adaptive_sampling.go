@@ -17,7 +17,7 @@ package app
 import (
 	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/sampling"
-	"github.com/houyi-tracing/houyi/pkg/ds/graph"
+	model2 "github.com/houyi-tracing/houyi/cmd/collector/app/sampling/model"
 	"github.com/jaegertracing/jaeger/cmd/collector/app"
 	"github.com/jaegertracing/jaeger/cmd/collector/app/processor"
 	"github.com/jaegertracing/jaeger/model"
@@ -36,7 +36,6 @@ type AdaptiveSamplingSpanProcessor struct {
 	maxRetries           int
 	retryQueueNumWorkers int
 	store                sampling.AdaptiveStrategyStore
-	traceGraph           graph.ExecutionGraph
 	lru                  cache.LRU // key: spanID, value: ExecutionGraphNode
 	retryQueue           *queue.BoundedQueue
 
@@ -121,7 +120,6 @@ func newAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Optio
 		retryQueueNumWorkers: options.retryQueueNumWorkers,
 		spanFilter:           options.asSpanFilter,
 		spanProcessor:        &sp,
-		traceGraph:           graph.NewExecutionGraph(options.logger, options.operationDuration),
 		lru:                  cache.NewLRU(options.lruCapacity),
 		maxRetries:           options.maxRetires,
 		store:                options.store,
@@ -136,7 +134,7 @@ func newAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Optio
 		processSpanFuncs = append(processSpanFuncs, adsp.countSpan)
 	}
 
-	sp.background(options.operationDuration, adsp.traceGraph.RemoveExpired)
+	sp.background(options.storeRefreshInterval, adsp.store.RemoveExpired)
 	adsp.processSpan = app.ChainedProcessSpan(processSpanFuncs...)
 	return &adsp
 }
@@ -146,9 +144,12 @@ func (sp *AdaptiveSamplingSpanProcessor) UpdateFilter(newFilter filter.SpanFilte
 }
 
 func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
-	svc, op := span.GetProcess().GetServiceName(), span.GetOperationName()
-	node := sp.traceGraph.Add(svc, op)
-	sp.lru.Put(span.SpanID, node)
+	operation := &model2.Operation{
+		Service: span.GetProcess().GetServiceName(),
+		Name:    span.GetOperationName(),
+	}
+	sp.store.Add(operation)
+	sp.lru.Put(span.SpanID, operation)
 
 	parentID := span.ParentSpanID()
 	if parentID != 0 {
@@ -159,10 +160,10 @@ func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
 			retries:  0,
 		})
 	} else {
-		sp.traceGraph.AddRoot(node)
+		sp.store.AddAsRoot(operation)
 		sp.logger.Debug("new root operation",
-			zap.String("service", svc),
-			zap.String("operation", span.OperationName))
+			zap.String("service", operation.Service),
+			zap.String("operation", operation.Name))
 	}
 }
 
@@ -174,27 +175,27 @@ func (sp *AdaptiveSamplingSpanProcessor) filterSpanToPromote(span *model.Span) {
 }
 
 func (sp *AdaptiveSamplingSpanProcessor) processItemFromRetryQueue(item *retryQueueItem) {
-	var parentNode, childNode graph.ExecutionGraphNode
+	var to, from *model2.Operation
 
 	if lruItem := sp.lru.Get(item.parentID); lruItem != nil {
-		parentNode = lruItem.(graph.ExecutionGraphNode)
+		to = lruItem.(*model2.Operation)
 	}
 	if lruItem := sp.lru.Get(item.span.SpanID); lruItem != nil {
-		childNode = lruItem.(graph.ExecutionGraphNode)
+		from = lruItem.(*model2.Operation)
 	}
 
-	if childNode != nil {
-		if parentNode != nil {
-			sp.traceGraph.AddEdge(childNode, parentNode)
-		} else {
-			if item.retries < sp.maxRetries {
-				item.retries += 1
-				sp.retryQueue.Produce(item)
-			}
+	if from != nil && to != nil {
+		if err := sp.store.AddEdge(from, to); err != nil {
+			sp.logger.Debug("failed to add edge",
+				zap.Stringer("from", from),
+				zap.Stringer("to", to),
+				zap.Error(err))
 		}
 	} else {
-		sp.logger.Debug("span id not found in LRU",
-			zap.String("span", item.span.String()))
+		if item.retries < sp.maxRetries {
+			item.retries += 1
+			sp.retryQueue.Produce(item)
+		}
 	}
 }
 

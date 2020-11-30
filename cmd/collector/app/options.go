@@ -17,7 +17,7 @@
 package app
 
 import (
-	filter "github.com/houyi-tracing/houyi/cmd/collector/app/filter"
+	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/sampling"
 	"github.com/jaegertracing/jaeger/cmd/collector/app"
 	"github.com/jaegertracing/jaeger/cmd/collector/app/processor"
@@ -35,14 +35,14 @@ const (
 	DefaultQueueSize = 2000
 	// DefaultLruCapacity is the capacity of LRU which contains key-value pairs
 	DefaultLruCapacity = 10000
-	// DefaultOperationDuration is the expiration duration of span in trace graph
-	DefaultOperationDuration = time.Minute * 5
 	// DefaultMaxRetries is the maximum retires of span to update trace graph
-	DefaultMaxRetires = 10
+	DefaultMaxRetries = 10
 	// DefaultFilterTagsFileName is the default filter tags filename for filtering spans
 	DefaultFilterTagsFileName = "filter-tags.json"
 	// DefaultRetryQueueNumWorkers is the default number of workers consuming from the retry queue
 	DefaultRetryQueueNumWorkers = 5
+	// DefaultStoreRefreshInterval is the refresh interval between refreshing operation for store
+	DefaultStoreRefreshInterval = time.Minute * 5
 )
 
 type options struct {
@@ -65,11 +65,11 @@ type options struct {
 	// Adaptive sampling
 	lruCapacity          int
 	maxRetires           int
-	operationDuration    time.Duration
 	asSpanFilter         filter.SpanFilter // as, short for adaptive sampling
 	filterTagsFilename   string
 	store                sampling.AdaptiveStrategyStore
 	retryQueueNumWorkers int
+	storeRefreshInterval time.Duration
 }
 
 // Option is a function that sets some option on StorageBuilder.
@@ -199,14 +199,6 @@ func (options) MaxRetries(retries int) Option {
 	}
 }
 
-// OperationDuration creates an Option that initializes the expire minutes of span in trace graph
-// in adaptive sampling span processor.
-func (options) OperationDuration(duration time.Duration) Option {
-	return func(o *options) {
-		o.operationDuration = duration
-	}
-}
-
 // AdaptiveSamplingSpanFilter creates an Option that initializes span filter for adaptive sampling.
 func (options) AdaptiveSamplingSpanFilter(filter filter.SpanFilter) Option {
 	return func(o *options) {
@@ -229,6 +221,12 @@ func (options) StrategyStore(store sampling.AdaptiveStrategyStore) Option {
 func (options) RetryQueueNumWorkers(retryQueueNumWorkers int) Option {
 	return func(c *options) {
 		c.retryQueueNumWorkers = retryQueueNumWorkers
+	}
+}
+
+func (options) StoreRefreshInterval(interval time.Duration) Option {
+	return func(c *options) {
+		c.storeRefreshInterval = interval
 	}
 }
 
@@ -267,10 +265,7 @@ func (o options) apply(opts ...Option) options {
 		ret.lruCapacity = DefaultLruCapacity
 	}
 	if ret.maxRetires == 0 {
-		ret.maxRetires = DefaultMaxRetires
-	}
-	if ret.operationDuration == 0 {
-		ret.operationDuration = DefaultOperationDuration
+		ret.maxRetires = DefaultMaxRetries
 	}
 	if ret.asSpanFilter == nil {
 		ret.asSpanFilter = filter.NewNullSpanFilter()
@@ -284,5 +279,9 @@ func (o options) apply(opts ...Option) options {
 	if ret.retryQueueNumWorkers == 0 {
 		ret.retryQueueNumWorkers = DefaultRetryQueueNumWorkers
 	}
+	if ret.storeRefreshInterval == 0 {
+		ret.storeRefreshInterval = DefaultStoreRefreshInterval
+	}
+
 	return ret
 }

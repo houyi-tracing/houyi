@@ -52,6 +52,8 @@ type ExecutionGraphNode interface {
 
 	// RemoveOut removes the out node of current node. The other node must call RemoveIn.
 	RemoveOut(node ExecutionGraphNode)
+
+	String() string
 }
 
 type ExecutionGraph interface {
@@ -85,7 +87,7 @@ type ExecutionGraph interface {
 	HasEdge(from, to ExecutionGraphNode) bool
 
 	// RemoveExpired removes all expired nodes and their edges.
-	RemoveExpired()
+	RemoveExpired() []ExecutionGraphNode
 
 	// Remove removes a node from this graph. Nothing would happen when remove a node not in this graph.
 	Remove(rmNode ExecutionGraphNode)

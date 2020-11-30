@@ -29,17 +29,19 @@ const (
 	amplificationFactor                  = "sampling.amplification-factor"
 	samplingRefreshIntervalShrinkageRate = "sampling.shrinkage-rate"
 	expCoefficient                       = "sampling.exp-coefficient"
+	operationDuration                    = "operation.duration"
 
-	defaultMaxNumChildNodes                     = 4
-	defaultMinSamplingProbability               = 0.001
-	defaultMaxSamplingProbability               = 1.0
-	defaultTreeRefreshInterval                  = time.Minute * 2
-	defaultSamplingRefreshInterval              = time.Minute * 1
-	defaultAmplificationFactor                  = 1.0
-	defaultSamplingRefreshIntervalShrinkageRate = 0.95
+	DefaultMaxNumChildNodes                     = 4
+	DefaultMinSamplingProbability               = 0.001
+	DefaultMaxSamplingProbability               = 1.0
+	DefaultTreeRefreshInterval                  = time.Minute * 2
+	DefaultSamplingRefreshInterval              = time.Minute * 1
+	DefaultAmplificationFactor                  = 1.0
+	DefaultSamplingRefreshIntervalShrinkageRate = 0.95
+	DefaultOperationDuration                    = time.Minute
 
 	// e^(-0.00690775527898213667 * 1000) = 0.001
-	defaultExpCoefficient = 0.00690775527898213667
+	DefaultExpCoefficient = 0.00690775527898213667
 )
 
 type Options struct {
@@ -51,30 +53,33 @@ type Options struct {
 	SamplingRefreshInterval              time.Duration
 	SamplingRefreshIntervalShrinkageRate float64
 	ExpCoefficient                       float64
+	OperationDuration                    time.Duration
 }
 
 func AddFlags(flagSet *flag.FlagSet) {
-	flagSet.Float64(amplificationFactor, defaultAmplificationFactor,
+	flagSet.Float64(amplificationFactor, DefaultAmplificationFactor,
 		"Amplification factor to amplify sampling rate")
-	flagSet.Int(maxNumChildNodes, defaultMaxNumChildNodes,
+	flagSet.Int(maxNumChildNodes, DefaultMaxNumChildNodes,
 		"Maximum number of child nodes for initializing sample strategy tree.",
 	)
-	flagSet.Float64(minSamplingProbability, defaultMinSamplingProbability,
+	flagSet.Float64(minSamplingProbability, DefaultMinSamplingProbability,
 		"Minimum sampling probability for all operations.",
 	)
-	flagSet.Float64(maxSamplingProbability, defaultMaxSamplingProbability,
+	flagSet.Float64(maxSamplingProbability, DefaultMaxSamplingProbability,
 		"Maximum sampling probability for all operations.",
 	)
-	flagSet.Duration(treeRefreshInterval, defaultTreeRefreshInterval,
+	flagSet.Duration(treeRefreshInterval, DefaultTreeRefreshInterval,
 		"Refresh interval of sample adaptiveStrategyStore tree.",
 	)
-	flagSet.Duration(samplingRefreshInterval, defaultSamplingRefreshInterval,
+	flagSet.Duration(samplingRefreshInterval, DefaultSamplingRefreshInterval,
 		"Refresh interval between different requests to get sampling strategy for same service.",
 	)
-	flagSet.Float64(samplingRefreshIntervalShrinkageRate, defaultSamplingRefreshIntervalShrinkageRate,
+	flagSet.Float64(samplingRefreshIntervalShrinkageRate, DefaultSamplingRefreshIntervalShrinkageRate,
 		"Shrinkage rate for reducing maximum sampling refresh interval in each time of prune operation.")
-	flagSet.Float64(expCoefficient, defaultExpCoefficient,
+	flagSet.Float64(expCoefficient, DefaultExpCoefficient,
 		"Exp coefficient to calculate QPS weight for operation.")
+	flagSet.Duration(operationDuration, DefaultOperationDuration,
+		"Operation duration for removing expired operations in trace graph.")
 }
 
 func (opts Options) InitFromViper(v *viper.Viper) Options {
@@ -86,5 +91,6 @@ func (opts Options) InitFromViper(v *viper.Viper) Options {
 	opts.AmplificationFactor = v.GetFloat64(amplificationFactor)
 	opts.SamplingRefreshIntervalShrinkageRate = v.GetFloat64(samplingRefreshIntervalShrinkageRate)
 	opts.ExpCoefficient = v.GetFloat64(expCoefficient)
+	opts.OperationDuration = v.GetDuration(operationDuration)
 	return opts
 }

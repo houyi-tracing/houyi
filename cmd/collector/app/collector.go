@@ -132,11 +132,6 @@ func (c *Collector) Start(builderOpts *CollectorOptions) error {
 	}
 	c.publishOpts(builderOpts)
 
-	// adaptive sampling
-	if err := c.strategyStore.Start(); err != nil {
-		c.logger.Fatal("could not start the Strategy Store", zap.Error(err))
-	}
-
 	return nil
 }
 
@@ -179,10 +174,6 @@ func (c *Collector) Close() error {
 
 	if err := c.tlsCloser.Close(); err != nil {
 		c.logger.Error("failed to close TLS certificate watcher", zap.Error(err))
-	}
-
-	if err := c.strategyStore.Close(); err != nil {
-		c.logger.Error("failed to close strategy store", zap.Error(err))
 	}
 
 	return nil
