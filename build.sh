@@ -1,7 +1,5 @@
 #!/bin/bash
 
-git pull
-
 # make directories
 mkdir ~/houyi
 mkdir ~/houyi/bin
