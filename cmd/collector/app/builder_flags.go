@@ -19,6 +19,7 @@ package app
 import (
 	"flag"
 	"github.com/spf13/viper"
+	"time"
 
 	"github.com/jaegertracing/jaeger/cmd/flags"
 	"github.com/jaegertracing/jaeger/pkg/config/tlscfg"
@@ -50,6 +51,7 @@ const (
 	collectorLruCapacity          = "sampling.span.processor.lru-capacity"
 	collectorMaxRetries           = "sampling.span.processor.max-retires"
 	collectorRetryQueueNumWorkers = "sampling.span.processor.retry-queue-num-workers"
+	collectorStoreRefreshInterval = "sampling.store.refresh.interval"
 )
 
 var tlsFlagsConfig = tlscfg.ServerFlagsConfig{
@@ -88,6 +90,7 @@ type AdaptiveSamplingOptions struct {
 	LruCapacity          int
 	MaxRetries           int
 	RetryQueueNumWorkers int
+	StoreRefreshInterval time.Duration
 }
 
 // AddFlags adds flags for CollectorOptions
@@ -107,10 +110,11 @@ func AddFlags(flags *flag.FlagSet) {
 }
 
 func AddAdaptiveSamplingFlags(flags *flag.FlagSet) {
-	flags.Int(collectorMaxRetries, DefaultMaxRetries, "Maximum retires for span to update trace graph")
+	flags.Int(collectorMaxRetries, DefaultMaxRetries, "Maximum retires for span to update trace graph.")
 	flags.Int(collectorLruCapacity, DefaultLruCapacity,
-		"Capacity of LRU storing key-pairs (spanID -> operationName)")
-	flags.Int(collectorRetryQueueNumWorkers, DefaultRetryQueueNumWorkers, "Number of workers consuming retry queue in span processor")
+		"Capacity of LRU storing key-pairs (spanID -> operationName).")
+	flags.Int(collectorRetryQueueNumWorkers, DefaultRetryQueueNumWorkers, "Number of workers consuming retry queue in span processor.")
+	flags.Duration(collectorStoreRefreshInterval, DefaultStoreRefreshInterval, "Refresh interval of store to remove expired operations.")
 }
 
 // AddOTELJaegerFlags adds flags that are exposed by OTEL Jaeger receier
@@ -142,5 +146,6 @@ func (cOpts *CollectorOptions) InitFromViper(v *viper.Viper) *CollectorOptions {
 	cOpts.MaxRetries = v.GetInt(collectorMaxRetries)
 	cOpts.LruCapacity = v.GetInt(collectorLruCapacity)
 	cOpts.RetryQueueNumWorkers = v.GetInt(collectorRetryQueueNumWorkers)
+	cOpts.StoreRefreshInterval = v.GetDuration(collectorStoreRefreshInterval)
 	return cOpts
 }
