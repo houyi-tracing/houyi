@@ -70,9 +70,11 @@ func (t *traceGraph) AddEdge(from, to ExecutionGraphNode) {
 	defer t.timer.Timing(from, t.duration)
 	defer t.timer.Timing(to, t.duration)
 
-	// from -> to
-	from.AddOut(to)
-	to.AddIn(from)
+	if from != to {
+		// from -> to
+		from.AddOut(to)
+		to.AddIn(from)
+	}
 }
 
 func (t *traceGraph) AddRoot(root ExecutionGraphNode) {
