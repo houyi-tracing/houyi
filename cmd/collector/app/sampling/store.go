@@ -207,7 +207,7 @@ func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service string, op
 		if !ok {
 			ass.qps[service] = make(map[string]*qpsEntry)
 		}
-		if qE, has := ass.qps[service][op.Name]; !has {
+		if qE, has := ass.qps[service][op.Name]; has {
 			qE.qps = op.Qps
 			qE.upSince = now
 		} else {
