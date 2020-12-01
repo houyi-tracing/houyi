@@ -112,7 +112,9 @@ func (t *sampleStrategyTree) Remove(service, operation string) {
 		}
 		parent := toRmNode.Parent()
 		parent.RemoveChild(toRmNode)
-		parent.PathDepression()
+		if parent != t.root {
+			parent.PathDepression()
+		}
 		t.nodeMap.Delete(service, operation)
 	}
 }

@@ -148,19 +148,19 @@ func (t *traceGraph) RemoveExpired() []ExecutionGraphNode {
 	removedNodes := make([]ExecutionGraphNode, 0)
 
 	for _, node := range t.nodes.AllNodes() {
-		if expired, err := t.timer.IsExpired(node); expired && err == nil {
+		expired, err := t.timer.IsExpired(node)
+		if expired {
 			t.removeNode(node)
 			t.logger.Debug("remove expired node in trace graph",
 				zap.String("service", node.Service()),
 				zap.String("operation", node.Operation()))
 			removedNodes = append(removedNodes, node)
-		} else {
-			if err != nil {
-				t.logger.Error(
-					"graph contains node but the node does not exist in timer",
-					zap.Error(err),
-					zap.Stringer("node", node))
-			}
+		}
+		if err != nil {
+			t.logger.Error(
+				"graph contains node but the node does not exist in timer",
+				zap.Error(err),
+				zap.Stringer("node", node))
 		}
 	}
 

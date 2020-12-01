@@ -69,7 +69,8 @@ func (ass *adaptiveStrategyStore) Add(operation *model2.Operation) {
 	defer ass.mux.Unlock()
 
 	svc, op := operation.Service, operation.Name
-	ass.traceGraph.Add(svc, op)
+	node := ass.traceGraph.Add(svc, op)
+	ass.traceGraph.Refresh(node)
 }
 
 func (ass *adaptiveStrategyStore) AddAsRoot(operation *model2.Operation) {
@@ -77,8 +78,10 @@ func (ass *adaptiveStrategyStore) AddAsRoot(operation *model2.Operation) {
 	defer ass.mux.Unlock()
 
 	svc, op := operation.Service, operation.Name
-	ass.traceGraph.Add(svc, op)
 	ass.sst.Add(svc, op)
+	node := ass.traceGraph.Add(svc, op)
+	ass.traceGraph.AddRoot(node)
+	ass.traceGraph.Refresh(node)
 }
 
 func (ass *adaptiveStrategyStore) AddEdge(from, to *model2.Operation) error {
@@ -89,6 +92,8 @@ func (ass *adaptiveStrategyStore) AddEdge(from, to *model2.Operation) error {
 		fromNode, _ := ass.traceGraph.GetNode(from.Service, from.Name)
 		toNode, _ := ass.traceGraph.GetNode(to.Service, to.Name)
 		ass.traceGraph.AddEdge(fromNode, toNode)
+		ass.traceGraph.Refresh(fromNode)
+		ass.traceGraph.Refresh(toNode)
 		return nil
 	} else {
 		return fmt.Errorf("add edge for operation not in trace graph")
@@ -108,7 +113,9 @@ func (ass *adaptiveStrategyStore) GetRoots(operation *model2.Operation) ([]*mode
 				Service: r.Service(),
 				Name:    r.Operation(),
 			})
+			ass.traceGraph.Refresh(r)
 		}
+		ass.traceGraph.Refresh(node)
 		return ret, nil
 	} else {
 		return ret, err
@@ -137,6 +144,7 @@ func (ass *adaptiveStrategyStore) RemoveExpired() {
 	rmNodes := ass.traceGraph.RemoveExpired()
 	for _, node := range rmNodes {
 		ass.sst.Remove(node.Service(), node.Operation())
+		ass.logger.Debug("remove expired operation", zap.Stringer("operation", node))
 	}
 }
 
@@ -176,7 +184,7 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 
 		if node, err := ass.traceGraph.GetNode(service, op.Name); err == nil {
 			ass.traceGraph.Refresh(node)
-			ass.logger.Debug("refresh operation", zap.Stringer("operation", node))
+			ass.logger.Debug("refresh root operation", zap.Stringer("operation", node))
 		}
 	}
 
@@ -199,7 +207,9 @@ func (ass *adaptiveStrategyStore) Promote(span *model.Span) {
 		roots := ass.traceGraph.GetRootsOf(node)
 		for _, r := range roots {
 			_ = ass.sst.Promote(r.Service(), r.Operation())
+			ass.traceGraph.Refresh(r)
 		}
+		ass.traceGraph.Refresh(node)
 	}
 }
 

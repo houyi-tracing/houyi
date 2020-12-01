@@ -42,7 +42,7 @@ const (
 	// DefaultRetryQueueNumWorkers is the default number of workers consuming from the retry queue
 	DefaultRetryQueueNumWorkers = 5
 	// DefaultStoreRefreshInterval is the refresh interval between refreshing operation for store
-	DefaultStoreRefreshInterval = time.Minute * 5
+	DefaultStoreRefreshInterval = time.Minute
 )
 
 type options struct {
