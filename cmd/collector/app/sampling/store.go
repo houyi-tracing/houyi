@@ -239,13 +239,25 @@ func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service string, op
 // qpsWeightCoefficient returns the weight Coefficient of service.
 // The service with higher QPS would get lower qpsWeightCoefficient.
 func (ass *adaptiveStrategyStore) qpsWeightCoefficient(service, operation string) float64 {
-	// TODO find a proper function to calculate weight coefficient for operations
-	if qE, has := ass.qps[service][operation]; has {
-		return math.Exp(-qE.qps * ass.ExpCoefficient)
-	} else {
-		ass.logger.Fatal("try to calculate qps weight for non-exist operation", zap.String("operation name", operation))
-		return 0
+	if _, has := ass.qps[service]; has {
+		if qE, has := ass.qps[service][operation]; has {
+			if qE.qps == 0 {
+				return 1.0
+			} else {
+				sum := 0.0
+				for _, opMap := range ass.qps {
+					for _, qps := range opMap {
+						if qps.qps != 0 {
+							sum += 1.0 / qps.qps
+						}
+					}
+				}
+				return (1 / qE.qps) / sum
+			}
+		}
 	}
+	ass.logger.Error("try to calculate qps weight for non-exist operation", zap.String("operation name", operation))
+	return 0
 }
 
 func maxDuration(d1, d2 time.Duration) time.Duration {
