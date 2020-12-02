@@ -5,5 +5,5 @@ mkdir ~/houyi
 mkdir ~/houyi/bin
 
 # build collector
-go build -v main.go
+go build -tags netgo -v main.go
 mv main ~/houyi/bin/collector
