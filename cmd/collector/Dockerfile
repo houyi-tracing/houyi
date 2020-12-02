@@ -14,7 +14,7 @@
 
 FROM alpine:3.7
 
-COPY ${HOME}/houyi/bin/collector /opt/microservices
+COPY collector /opt/microservices/
 
 # RPC
 EXPOSE 14250
@@ -25,7 +25,7 @@ EXPOSE 14268
 # ADMIN
 EXPOSE 14269
 
-WORKDIR /opt/microservices
+WORKDIR /opt/microservices/
 
 ENV MAX_CHILD_NODES=10
 
