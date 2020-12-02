@@ -28,7 +28,6 @@ const (
 	samplingRefreshInterval              = "sampling.sampling-refresh-interval"
 	amplificationFactor                  = "sampling.amplification-factor"
 	samplingRefreshIntervalShrinkageRate = "sampling.shrinkage-rate"
-	expCoefficient                       = "sampling.exp-coefficient"
 	operationDuration                    = "operation.duration"
 
 	DefaultMaxNumChildNodes                     = 4
@@ -39,9 +38,6 @@ const (
 	DefaultAmplificationFactor                  = 1.0
 	DefaultSamplingRefreshIntervalShrinkageRate = 0.95
 	DefaultOperationDuration                    = time.Minute
-
-	// e^(-0.00690775527898213667 * 1000) = 0.001
-	DefaultExpCoefficient = 0.00690775527898213667
 )
 
 type Options struct {
@@ -52,7 +48,6 @@ type Options struct {
 	TreeRefreshInterval                  time.Duration
 	SamplingRefreshInterval              time.Duration
 	SamplingRefreshIntervalShrinkageRate float64
-	ExpCoefficient                       float64
 	OperationDuration                    time.Duration
 }
 
@@ -76,8 +71,6 @@ func AddFlags(flagSet *flag.FlagSet) {
 	)
 	flagSet.Float64(samplingRefreshIntervalShrinkageRate, DefaultSamplingRefreshIntervalShrinkageRate,
 		"Shrinkage rate for reducing maximum sampling refresh interval in each time of prune operation.")
-	flagSet.Float64(expCoefficient, DefaultExpCoefficient,
-		"Exp coefficient to calculate QPS weight for operation.")
 	flagSet.Duration(operationDuration, DefaultOperationDuration,
 		"Operation duration for removing expired operations in trace graph.")
 }
@@ -90,7 +83,6 @@ func (opts Options) InitFromViper(v *viper.Viper) Options {
 	opts.SamplingRefreshInterval = v.GetDuration(samplingRefreshInterval)
 	opts.AmplificationFactor = v.GetFloat64(amplificationFactor)
 	opts.SamplingRefreshIntervalShrinkageRate = v.GetFloat64(samplingRefreshIntervalShrinkageRate)
-	opts.ExpCoefficient = v.GetFloat64(expCoefficient)
 	opts.OperationDuration = v.GetDuration(operationDuration)
 	return opts
 }
