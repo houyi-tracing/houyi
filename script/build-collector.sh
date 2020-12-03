@@ -44,7 +44,7 @@ echo "Starting collector..."
 ./collector --sampling.max-num-child-nodes=${MAX_NUM_CHILD_NODES} --cassandra.servers=${CASSANDRA_SERVERS}
 EOF
 chmod u+x ${RUN_COLLECTOR}
-mv ${BUILD_RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
+mv ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
 
 RUN_COLLECTOR_DOCKER=run-collector-docker.sh
 cat <<EOF > ${RUN_COLLECTOR_DOCKER}
