@@ -32,7 +32,7 @@ mv Dockerfile ${BUILD_OUT_DIR}/
 RUN_AGENT_DOCKER=run-agent-docker.sh
 cat <<EOF > ${RUN_AGENT_DOCKER}
 #!/bin/bash
-docker run -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --env HOUYI_COLLECTOR_HOST=${HOUYI_COLLECTOR_HOST} houyi-agent
+docker run -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --name houyi-agent --env HOUYI_COLLECTOR_HOST=${HOUYI_COLLECTOR_HOST} houyi-agent
 EOF
 chmod u+x ${RUN_AGENT_DOCKER}
 mv ${RUN_AGENT_DOCKER} ${BUILD_OUT_DIR}/

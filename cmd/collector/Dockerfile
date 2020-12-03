@@ -17,13 +17,6 @@ FROM alpine:3.7
 COPY collector /opt/microservices/
 COPY filter-config.json /root/
 
-# RPC
-EXPOSE 14250
-
-# HTTP
-EXPOSE 14268
-
-# ADMIN
-EXPOSE 14269
+EXPOSE 14250 14268 14269
 
 ENTRYPOINT ["/opt/microservices/collector"]
