@@ -4,5 +4,5 @@
 mkdir -p ~/houyi/bin
 
 # build collector
-CGO_ENABLED=0 GOOS=linux GOOsgo build -tags netgo -v main.go
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -v main.go
 mv main ~/houyi/bin/collector
