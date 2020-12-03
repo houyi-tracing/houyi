@@ -42,10 +42,10 @@ mv Dockerfile ${BUILD_OUT_DIR}/
 RUN_COLLECTOR_DOCKER=run-collector-docker.sh
 cat <<EOF > ${RUN_COLLECTOR_DOCKER}
 #!/bin/sh
-if [[ -z "${MAX_NUM_CHILD_NODES}" ]]; then
+if [[ -z \${MAX_NUM_CHILD_NODES} ]]; then
   MAX_NUM_CHILD_NODES=4
 fi
-if [[ -z "${CASSANDRA_SERVERS}" ]]; then
+if [[ -z \${CASSANDRA_SERVERS} ]]; then
   echo "at least one cassandra server is required"
   return
 fi
