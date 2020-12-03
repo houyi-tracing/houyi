@@ -27,6 +27,4 @@ EXPOSE 5775
 # http port
 EXPOSE 5778
 
-WORKDIR /opt/microservices/
-
-ENTRYPOINT ["agent"]
+ENTRYPOINT ["/opt/microservices/agent"]

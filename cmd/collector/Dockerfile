@@ -25,8 +25,4 @@ EXPOSE 14268
 # ADMIN
 EXPOSE 14269
 
-WORKDIR /opt/microservices/
-
-ENV MAX_CHILD_NODES=10
-
-ENTRYPOINT ["collector", "--sampling.max-num-chlid-nodes=${MAX_CHILD_NODES}"]
+ENTRYPOINT ["/opt/microservices/collector"]
