@@ -32,7 +32,7 @@ COPY collector /opt/ms/
 COPY filter-config.json /root/
 COPY ${RUN_COLLECTOR} /opt/ms/
 EXPOSE 14250 14268 14269
-WORKDIR=/opt/ms/
+WORKDIR /opt/ms/
 ENTRYPOINT ["/opt/ms/${RUN_COLLECTOR}"]
 EOF
 mv Dockerfile ${BUILD_OUT_DIR}/
