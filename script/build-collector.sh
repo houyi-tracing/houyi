@@ -21,7 +21,7 @@ mv ${FILTER_CONFIG} ${BUILD_OUT_DIR}/
 RUN_COLLECTOR=run-collector.sh
 cat <<EOF > ${RUN_COLLECTOR}
 #!/bin/sh
-./collector --sampling.max-num-child-nodes=${MAX_NUM_CHILD_NODES} --cassandra.servers=${CASSANDRA_SERVERS}
+./collector --sampling.max-num-child-nodes=\${MAX_NUM_CHILD_NODES} --cassandra.servers=\${CASSANDRA_SERVERS}
 EOF
 chmod u+x ${RUN_COLLECTOR}
 mv ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
@@ -46,10 +46,10 @@ if [[ -z \${CASSANDRA_SERVERS} ]]; then
   echo "at least one cassandra server is required"
   return
 fi
-echo "MAX_NUM_CHILD_NODES=${MAX_NUM_CHILD_NODES}"
-echo "CASSANDRA_SERVERS=${CASSANDRA_SERVERS}"
+echo "MAX_NUM_CHILD_NODES=\${MAX_NUM_CHILD_NODES}"
+echo "CASSANDRA_SERVERS=\${CASSANDRA_SERVERS}"
 echo "Starting collector..."
-docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector --env CASSANDRA_SERVERS=${CASSANDRA_SERVERS} --env MAX_NUM_CHILD_NODES=${MAX_NUM_CHILD_NODES} houyi-collector
+docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector --env CASSANDRA_SERVERS=\${CASSANDRA_SERVERS} --env MAX_NUM_CHILD_NODES=\${MAX_NUM_CHILD_NODES} houyi-collector
 EOF
 chmod u+x ${RUN_COLLECTOR_DOCKER}
 mv ${RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
