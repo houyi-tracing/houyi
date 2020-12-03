@@ -1,9 +1,0 @@
-{
-  "filter-tags": [
-    {
-      "key": "http.status_code",
-      "operation": "!=",
-      "value": 200
-    }
-  ]
-}

@@ -38,7 +38,7 @@ const (
 	// DefaultMaxRetries is the maximum retires of span to update trace graph
 	DefaultMaxRetries = 10
 	// DefaultFilterTagsFileName is the default filter tags filename for filtering spans
-	DefaultFilterTagsFileName = "filter-tags.json"
+	DefaultFilterTagsFileName = "filter-config.json"
 	// DefaultRetryQueueNumWorkers is the default number of workers consuming from the retry queue
 	DefaultRetryQueueNumWorkers = 5
 	// DefaultStoreRefreshInterval is the refresh interval between refreshing operation for store

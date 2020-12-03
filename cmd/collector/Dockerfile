@@ -15,6 +15,7 @@
 FROM alpine:3.7
 
 COPY collector /opt/microservices/
+COPY filter-config.json /root/
 
 # RPC
 EXPOSE 14250
