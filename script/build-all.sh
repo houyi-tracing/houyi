@@ -6,11 +6,11 @@ git pull
 mkdir -p ~/houyi/bin/
 
 # build collector
-cd ./cmd/collector || exit
-go build -tags netgo -v main.go
+cd ../cmd/collector || exit
+CGO_ENABLED=0 GOOS=linux GOOsgo build -tags netgo -v main.go
 mv main ~/houyi/bin/collector
 
 # build agent
 cd ../agent || exit
-go build -tags netgo -v main.go
+CGO_ENABLED=0 GOOS=linux GOOsgo build -tags netgo -v main.go
 mv main ~/houyi/bin/agent
