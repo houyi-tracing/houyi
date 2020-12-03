@@ -14,7 +14,7 @@ CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -tags netgo -o ${BUILD_OUT_DIR}
 RUN_AGENT=run-agent.sh
 cat <<EOF > ${RUN_AGENT}
 #!/bin/sh
-nohup ./agent --reporter.grpc.host-port=${HOUYI_COLLECTOR_HOST}:14250 --collector.host=${HOUYI_COLLECTOR_HOST} &
+./agent --reporter.grpc.host-port=${HOUYI_COLLECTOR_HOST}:14250 --collector.host=${HOUYI_COLLECTOR_HOST}
 EOF
 chmod u+x ${RUN_AGENT}
 mv ${RUN_AGENT} ${BUILD_OUT_DIR}/
