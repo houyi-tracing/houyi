@@ -11,12 +11,13 @@ mkdir -p ${BUILD_OUT_DIR}
 
 CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -tags netgo -o ${BUILD_OUT_DIR}/${COMPONENT} -v ${WORK_DIR}/main.go
 
-cat <<EOF > run-agent.sh
+RUN_AGENT=run-agent.sh
+cat <<EOF > ${RUN_AGENT}
 #!/bin/sh
 ./agent --reporter.grpc.host-port=${HOUYI_COLLECTOR_HOST}:14250 --collector.host=${HOUYI_COLLECTOR_HOST}
 EOF
-chmod u+x run-agent.sh
-mv run-agent.sh ${BUILD_OUT_DIR}/
+chmod u+x ${RUN_AGENT}
+mv ${RUN_AGENT} ${BUILD_OUT_DIR}/
 
 cat <<EOF > Dockerfile
 FROM alpine:3.7
@@ -28,16 +29,18 @@ ENTRYPOINT ["/opt/ms/run-agent.sh"]
 EOF
 mv Dockerfile ${BUILD_OUT_DIR}/
 
-cat <<EOF > run-agent-docker.sh
+RUN_AGENT_DOCKER=run-agent-docker.sh
+cat <<EOF > ${RUN_AGENT_DOCKER}
 #!/bin/bash
 docker run -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --env HOUYI_COLLECTOR_HOST=${HOUYI_COLLECTOR_HOST} houyi-agent
 EOF
-chmod u+x start-agent-docker.sh
-mv run-agent-docker.sh ${BUILD_OUT_DIR}/
+chmod u+x ${RUN_AGENT_DOCKER}
+mv ${RUN_AGENT_DOCKER} ${BUILD_OUT_DIR}/
 
-cat <<EOF > build-agent-docker.sh
+BUILD_AGENT_DOCKER=build-agent-docker.sh
+cat <<EOF > ${BUILD_AGENT_DOCKER}
 #!/bin/sh
 docker build -t houyi-agent .
 EOF
-chmod u+x build-agent-docker.sh
-mv build-agent-docker.sh ${BUILD_OUT_DIR}/
+chmod u+x ${BUILD_AGENT_DOCKER}
+mv ${BUILD_AGENT_DOCKER} ${BUILD_OUT_DIR}/
