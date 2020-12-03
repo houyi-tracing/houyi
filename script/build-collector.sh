@@ -51,6 +51,8 @@ cat <<EOF > ${RUN_COLLECTOR_DOCKER}
 #!/bin/sh
 docker run -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector --env CASSANDRA_SERVERS=${CASSANDRA_SERVERS} --env MAX_NUM_CHILD_NODES=${MAX_NUM_CHILD_NODES} houyi-collector
 EOF
+chmod u+x ${RUN_COLLECTOR_DOCKER}
+mv ${RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
 
 BUILD_RUN_COLLECTOR_DOCKER=build-collector-docker.sh
 cat <<EOF > ${BUILD_RUN_COLLECTOR_DOCKER}
@@ -59,6 +61,3 @@ docker build t houyi-collector .
 EOF
 chmod u+x ${BUILD_RUN_COLLECTOR_DOCKER}
 mv ${BUILD_RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
-
-
-
