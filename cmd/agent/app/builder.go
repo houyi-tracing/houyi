@@ -47,7 +47,7 @@ const (
 	binaryProtocol  Protocol = "binary"
 )
 
-var defaultHTTPServerHostPort = "localhost:" + strconv.Itoa(ports.AgentConfigServerHTTP)
+var defaultHTTPServerHostPort = ":" + strconv.Itoa(ports.AgentConfigServerHTTP)
 var defaultCollectorHTTPServerHostPort = "localhost:" + strconv.Itoa(ports.CollectorHTTP)
 
 // Model used to distinguish the data transfer model
