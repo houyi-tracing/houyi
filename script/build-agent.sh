@@ -33,7 +33,7 @@ cat <<EOF > run-agent-docker.sh
 docker run -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --env HOUYI_COLLECTOR_HOST=${HOUYI_COLLECTOR_HOST} houyi-agent
 EOF
 chmod u+x start-agent-docker.sh
-mv start-agent-docker.sh ${BUILD_OUT_DIR}/
+mv run-agent-docker.sh ${BUILD_OUT_DIR}/
 
 cat <<EOF > build-agent-docker.sh
 #!/bin/sh
