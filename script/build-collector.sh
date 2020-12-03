@@ -24,7 +24,7 @@ cat <<EOF > ${RUN_COLLECTOR}
 echo "MAX_NUM_CHILD_NODES=${MAX_NUM_CHILD_NODES}"
 echo "CASSANDRA_SERVERS=${CASSANDRA_SERVERS}"
 echo "Starting collector..."
-nohup ./collector --sampling.max-num-child-nodes=${MAX_NUM_CHILD_NODES} --cassandra.servers=${CASSANDRA_SERVERS} &
+./collector --sampling.max-num-child-nodes=${MAX_NUM_CHILD_NODES} --cassandra.servers=${CASSANDRA_SERVERS}
 EOF
 chmod u+x ${RUN_COLLECTOR}
 mv ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
