@@ -48,7 +48,8 @@ const (
 )
 
 var defaultHTTPServerHostPort = ":" + strconv.Itoa(ports.AgentConfigServerHTTP)
-var defaultCollectorHTTPServerHostPort = "localhost:" + strconv.Itoa(ports.CollectorHTTP)
+var defaultCollectorHttpPort = ports.CollectorHTTP
+var defaultCollectorHost = "localhost"
 
 // Model used to distinguish the data transfer model
 type Model string
@@ -89,8 +90,10 @@ type ServerConfiguration struct {
 // HTTPServerConfiguration holds config for a server providing sampling strategies and baggage restrictions to clients
 type HTTPServerConfiguration struct {
 	HostPort string `yaml:"hostPort" validate:"nonzero"`
-	// Add this filed to transfer request for pulling sampling strategies from clients to collector. [Houyi Tracing]
-	CollectorHttpHostPort string `yaml:"hostPort" validate:"nonzero"`
+
+	// Add below two fileds to transfer request for pulling sampling strategies from clients to collector. [Houyi Tracing]
+	CollectorHttpPort string `yaml:"collectorHttpPort" validate:"nonzero"`
+	CollectorHost     string `yaml:"collectorHost" validate:"nonzero"`
 }
 
 // WithReporter adds auxiliary reporters.
@@ -169,10 +172,9 @@ func (c HTTPServerConfiguration) getHTTPServer(manager configmanager.ClientConfi
 	if c.HostPort == "" {
 		c.HostPort = defaultHTTPServerHostPort
 	}
-	if c.CollectorHttpHostPort == "" {
-		c.CollectorHttpHostPort = defaultHTTPServerHostPort
-	}
-	return httpserver.NewHTTPServer(c.HostPort, c.CollectorHttpHostPort, manager, mFactory)
+
+	collectorHostPort := fmt.Sprintf("%s:%s", c.CollectorHost, c.CollectorHttpPort)
+	return httpserver.NewHTTPServer(c.HostPort, collectorHostPort, manager, mFactory)
 }
 
 // GetThriftProcessor gets a TBufferedServer backed Processor using the collector configuration

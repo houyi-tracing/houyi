@@ -18,6 +18,7 @@ package app
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/spf13/viper"
@@ -35,10 +36,11 @@ const (
 	processorPrefixFmt = "processor.%s-%s."
 
 	// HTTPServerHostPort is the flag for HTTP endpoint
-	HTTPServerHostPort = "http-server.host-port"
+	HTTPServerHostPort = "http.port"
 
 	// CollectorHttpServerHostPort is the flag for HTTP endpoint of collector
-	CollectorHTTPServerHostPort = "collector.http-server.host-port"
+	CollectorHost     = "collector.host"
+	CollectorHttpPort = "collector.http.port"
 )
 
 var defaultProcessors = []struct {
@@ -70,10 +72,13 @@ func AddOTELFlags(flags *flag.FlagSet) {
 		HTTPServerHostPort,
 		defaultHTTPServerHostPort,
 		"host:port of the http server (e.g. for /sampling point and /baggageRestrictions endpoint)")
-	flags.String(
-		CollectorHTTPServerHostPort,
-		defaultCollectorHTTPServerHostPort,
+	flags.Int(
+		CollectorHttpPort,
+		defaultCollectorHttpPort,
 		"host:port of the collector http server (e.g. for /api/strategy point endpoint)")
+	flags.String(CollectorHost,
+		defaultCollectorHost,
+		"host of the collector")
 }
 
 // InitFromViper initializes Builder with properties retrieved from Viper.
@@ -90,7 +95,13 @@ func (b *Builder) InitFromViper(v *viper.Viper) *Builder {
 	}
 
 	b.HTTPServer.HostPort = portNumToHostPort(v.GetString(HTTPServerHostPort))
-	b.HTTPServer.CollectorHttpHostPort = v.GetString(CollectorHTTPServerHostPort)
+	b.HTTPServer.CollectorHttpPort = v.GetString(CollectorHttpPort)
+
+	b.HTTPServer.CollectorHost = v.GetString(CollectorHost)
+
+	if hostFromEnv := os.Getenv("HOUYI_COLLECTOR_HOST"); hostFromEnv != "" && b.HTTPServer.CollectorHost == defaultCollectorHost {
+		b.HTTPServer.CollectorHost = hostFromEnv
+	}
 	return b
 }
 
