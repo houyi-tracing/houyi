@@ -1,8 +1,13 @@
 #!/bin/bash
 
-# make directories
-mkdir -p ~/houyi/bin
+OS=$1
+ARCH=$2
 
-# build agent
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -v main.go
-mv main ~/houyi/bin/agent
+COMPONENT=agent
+BUILD_OUT_DIR=~/houyi/${COMPONENT}/
+WORK_DIR=../cmd/${COMPONENT}/
+
+mkdir -p ${BUILD_OUT_DIR}
+CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -v ${WORK_DIR}/main.go
+mv ${WORK_DIR}/main ${BUILD_OUT_DIR}
+mv ${WORK_DIR}/Dockerfile ${BUILD_OUT_DIR}

@@ -2,15 +2,8 @@
 
 git pull
 
-# make directories
-mkdir -p ~/houyi/bin/
+OS=$1
+ARCH=$2
 
-# build collector
-cd ../cmd/collector || exit
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -v main.go
-mv main ~/houyi/bin/collector
-
-# build agent
-cd ../agent || exit
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags netgo -v main.go
-mv main ~/houyi/bin/agent
+./build-agent.sh ${OS} ${ARCH}
+./build-collector.sh ${OS} ${ARCH}
