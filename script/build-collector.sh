@@ -18,15 +18,6 @@ cat <<EOF > ${FILTER_CONFIG}
 EOF
 mv ${FILTER_CONFIG} ${BUILD_OUT_DIR}/
 
-cat <<EOF > Dockerfile
-FROM alpine:3.7
-COPY collector /opt/microservices/
-COPY filter-config.json /root/
-EXPOSE 14250 14268 14269
-ENTRYPOINT ["/opt/microservices/collector"]
-EOF
-mv Dockerfile ${BUILD_OUT_DIR}/
-
 RUN_COLLECTOR=run-collector.sh
 cat <<EOF > ${RUN_COLLECTOR}
 #!/bin/sh
@@ -45,6 +36,16 @@ echo "Starting collector..."
 EOF
 chmod u+x ${RUN_COLLECTOR}
 mv ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
+
+cat <<EOF > Dockerfile
+FROM alpine:3.7
+COPY collector /opt/ms/
+COPY filter-config.json /root/
+COPY ${RUN_COLLECTOR} /opt/ms
+EXPOSE 14250 14268 14269
+ENTRYPOINT ["/opt/ms/${RUN_COLLECTOR}"]
+EOF
+mv Dockerfile ${BUILD_OUT_DIR}/
 
 RUN_COLLECTOR_DOCKER=run-collector-docker.sh
 cat <<EOF > ${RUN_COLLECTOR_DOCKER}
