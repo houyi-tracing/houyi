@@ -99,7 +99,7 @@ func (b *Builder) InitFromViper(v *viper.Viper) *Builder {
 
 	b.HTTPServer.CollectorHost = v.GetString(CollectorHost)
 
-	if hostFromEnv := os.Getenv("HOUYI_COLLECTOR_HOST"); hostFromEnv != "" && b.HTTPServer.CollectorHost == defaultCollectorHost {
+	if hostFromEnv := os.Getenv("COLLECTOR_SERVICE_HOST"); hostFromEnv != "" && b.HTTPServer.CollectorHost == defaultCollectorHost {
 		b.HTTPServer.CollectorHost = hostFromEnv
 	}
 	return b
