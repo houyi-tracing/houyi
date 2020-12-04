@@ -86,7 +86,7 @@ func (b *SpanHandlerBuilder) BuildHandlers(spanProcessor processor.SpanProcessor
 		handler.NewZipkinSpanHandler(b.Logger, spanProcessor, zs.NewChainedSanitizer(zs.StandardSanitizers...)),
 		jaegerBatchesHandler,
 		handler.NewGRPCHandler(b.Logger, spanProcessor),
-		handler2.NewAPIHandler(jaegerBatchesHandler, b.StrategyStore, b.SpanFilter, b.HealthCheck),
+		handler2.NewAPIHandler(jaegerBatchesHandler, b.StrategyStore, b.SpanFilter),
 	}
 }
 
