@@ -58,7 +58,7 @@ mv ${RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
 BUILD_RUN_COLLECTOR_DOCKER=build-collector-docker.sh
 cat <<EOF > ${BUILD_RUN_COLLECTOR_DOCKER}
 #!/bin/sh
-docker build -t houyi-collector .
+docker build -t houyitracing/houyi-collector .
 EOF
 chmod u+x ${BUILD_RUN_COLLECTOR_DOCKER}
 mv ${BUILD_RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/

@@ -40,7 +40,7 @@ mv ${RUN_AGENT_DOCKER} ${BUILD_OUT_DIR}/
 BUILD_AGENT_DOCKER=build-agent-docker.sh
 cat <<EOF > ${BUILD_AGENT_DOCKER}
 #!/bin/sh
-docker build -t houyi-agent .
+docker build -t houyitracing/houyi-agent .
 EOF
 chmod u+x ${BUILD_AGENT_DOCKER}
 mv ${BUILD_AGENT_DOCKER} ${BUILD_OUT_DIR}/
