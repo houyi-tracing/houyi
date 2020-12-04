@@ -87,6 +87,7 @@ func (c *Collector) Start(builderOpts *CollectorOptions) error {
 		MetricsFactory: c.metricsFactory,
 		SpanFilter:     c.spanFilter,
 		StrategyStore:  c.strategyStore,
+		HealthCheck:    c.hCheck,
 	}
 
 	c.spanProcessor = handlerBuilder.BuildSpanProcessor()

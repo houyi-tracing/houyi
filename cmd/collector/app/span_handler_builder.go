@@ -20,6 +20,7 @@ import (
 	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	handler2 "github.com/houyi-tracing/houyi/cmd/collector/app/handler"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/sampling"
+	"github.com/jaegertracing/jaeger/pkg/healthcheck"
 	"os"
 
 	"github.com/uber/jaeger-lib/metrics"
@@ -40,6 +41,7 @@ type SpanHandlerBuilder struct {
 	MetricsFactory metrics.Factory
 	StrategyStore  sampling.AdaptiveStrategyStore
 	SpanFilter     filter.SpanFilter
+	HealthCheck    *healthcheck.HealthCheck
 }
 
 // SpanHandlers holds instances to the span handlers built by the SpanHandlerBuilder
@@ -84,7 +86,7 @@ func (b *SpanHandlerBuilder) BuildHandlers(spanProcessor processor.SpanProcessor
 		handler.NewZipkinSpanHandler(b.Logger, spanProcessor, zs.NewChainedSanitizer(zs.StandardSanitizers...)),
 		jaegerBatchesHandler,
 		handler.NewGRPCHandler(b.Logger, spanProcessor),
-		handler2.NewAPIHandler(jaegerBatchesHandler, b.StrategyStore, b.SpanFilter),
+		handler2.NewAPIHandler(jaegerBatchesHandler, b.StrategyStore, b.SpanFilter, b.HealthCheck),
 	}
 }
 
