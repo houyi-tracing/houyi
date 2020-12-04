@@ -60,7 +60,7 @@ func StartHTTPServer(params *HTTPServerParams) (*http.Server, error) {
 
 func serveHTTP(server *http.Server, listener net.Listener, params *HTTPServerParams) {
 	r := mux.NewRouter()
-	apiHandler := handler2.NewAPIHandler(params.JaegerBatchesHandler, params.SamplingStore, params.SpanFilter)
+	apiHandler := handler2.NewAPIHandler(params.JaegerBatchesHandler, params.SamplingStore, params.SpanFilter, params.HealthCheck)
 	apiHandler.RegisterRoutes(r)
 
 	cfgHandler := clientcfgHandler.NewHTTPHandler(clientcfgHandler.HTTPHandlerParams{
