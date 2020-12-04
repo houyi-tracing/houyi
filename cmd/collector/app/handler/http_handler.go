@@ -26,7 +26,6 @@ import (
 	model2 "github.com/houyi-tracing/houyi/cmd/collector/app/sampling/model"
 	"github.com/jaegertracing/jaeger/cmd/collector/app/handler"
 	"github.com/jaegertracing/jaeger/cmd/collector/app/processor"
-	"github.com/jaegertracing/jaeger/pkg/healthcheck"
 	tJaeger "github.com/jaegertracing/jaeger/thrift-gen/jaeger"
 	"io/ioutil"
 	"mime"
@@ -51,7 +50,6 @@ type APIHandler struct {
 	jaegerBatchesHandler handler.JaegerBatchesHandler
 	strategyStore        sampling.AdaptiveStrategyStore
 	spanFilter           app.SpanFilter
-	hc                   *healthcheck.HealthCheck
 }
 
 // NewAPIHandler returns a new APIHandler
@@ -59,13 +57,11 @@ func NewAPIHandler(
 	jaegerBatchesHandler handler.JaegerBatchesHandler,
 	strategyStore sampling.AdaptiveStrategyStore,
 	filter app.SpanFilter,
-	hc *healthcheck.HealthCheck,
 ) *APIHandler {
 	return &APIHandler{
 		jaegerBatchesHandler: jaegerBatchesHandler,
 		strategyStore:        strategyStore,
 		spanFilter:           filter,
-		hc:                   hc,
 	}
 }
 
@@ -74,8 +70,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router) {
 	// GET
 	router.HandleFunc("/api/filter_tags", aH.GetFilterTags).Methods(http.MethodGet)
 	router.HandleFunc("/api/strategy", aH.GetSamplingStrategy).Methods(http.MethodGet)
-	router.Handle("/health", aH.hc.Handler())
-
 	// POST
 	router.HandleFunc("/api/traces", aH.SaveSpan).Methods(http.MethodPost)
 	router.HandleFunc("/api/update_filter", aH.UpdateFilter).Methods(http.MethodPost)
