@@ -45,15 +45,15 @@ spec:
       serviceAccountName: houyi-collector
       containers:
         - name: houyi-collector
-          image: houyitracing/houyi-collector
+          image: houyitracing/collector
           imagePullPolicy: Always
           env:
             - name: MAX_NUM_CHILD_NODES
-              value: 4
+              value: "4"
             - name: CASSANDRA_SERVERS
-              value: 192.168.31.229
+              value: "192.168.31.229"
             - name: LOG_LEVEL
-              value: debug
+              value: "debug"
           ports:
             - containerPort: 14250
             - containerPort: 14268
