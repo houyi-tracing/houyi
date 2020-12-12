@@ -33,5 +33,5 @@ if [[ -n $OPERATION_DURATION ]]; then
   ROOT_CMD="${ROOT_CMD} --operation.duration=${OPERATION_DURATION}"
 fi
 
-echo ROOT_CMD
-eval ROOT_CMD
+echo $ROOT_CMD
+eval $ROOT_CMD
