@@ -49,7 +49,7 @@ const (
 
 	// Adaptive sampling
 	collectorLruCapacity          = "sampling.span.processor.lru-capacity"
-	collectorMaxRetries           = "sampling.span.processor.max-retires"
+	collectorRetryQueueItemExpire = "sampling.span.processor.retry-queue-item-expire"
 	collectorRetryQueueNumWorkers = "sampling.span.processor.retry-queue-num-workers"
 	collectorStoreRefreshInterval = "sampling.store.refresh.interval"
 )
@@ -88,9 +88,9 @@ type CollectorOptions struct {
 
 type AdaptiveSamplingOptions struct {
 	LruCapacity          int
-	MaxRetries           int
-	RetryQueueNumWorkers int
 	StoreRefreshInterval time.Duration
+	RetryQueueNumWorkers int
+	RetryQueueItemExpire time.Duration
 }
 
 // AddFlags adds flags for CollectorOptions
@@ -110,7 +110,7 @@ func AddFlags(flags *flag.FlagSet) {
 }
 
 func AddAdaptiveSamplingFlags(flags *flag.FlagSet) {
-	flags.Int(collectorMaxRetries, DefaultMaxRetries, "Maximum retires for span to update trace graph.")
+	flags.Duration(collectorRetryQueueItemExpire, DefaultRetryQueueItemExpire, "Expire of retry queue's items")
 	flags.Int(collectorLruCapacity, DefaultLruCapacity,
 		"Capacity of LRU storing key-pairs (spanID -> operationName).")
 	flags.Int(collectorRetryQueueNumWorkers, DefaultRetryQueueNumWorkers, "Number of workers consuming retry queue in span processor.")
@@ -143,7 +143,7 @@ func (cOpts *CollectorOptions) InitFromViper(v *viper.Viper) *CollectorOptions {
 	cOpts.TLS = tlsFlagsConfig.InitFromViper(v)
 
 	// Adaptive sampling
-	cOpts.MaxRetries = v.GetInt(collectorMaxRetries)
+	cOpts.RetryQueueItemExpire = v.GetDuration(collectorRetryQueueItemExpire)
 	cOpts.LruCapacity = v.GetInt(collectorLruCapacity)
 	cOpts.RetryQueueNumWorkers = v.GetInt(collectorRetryQueueNumWorkers)
 	cOpts.StoreRefreshInterval = v.GetDuration(collectorStoreRefreshInterval)

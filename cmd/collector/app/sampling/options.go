@@ -25,7 +25,7 @@ const (
 	minSamplingProbability               = "sampling.max-samp-prob"
 	maxSamplingProbability               = "sampling.min-samp-prob"
 	treeRefreshInterval                  = "sampling.tree-refresh-interval"
-	samplingRefreshInterval              = "sampling.sampling-refresh-interval"
+	samplingRefreshInterval              = "sampling.initial-refresh-interval"
 	amplificationFactor                  = "sampling.amplification-factor"
 	samplingRefreshIntervalShrinkageRate = "sampling.shrinkage-rate"
 	operationDuration                    = "operation.duration"

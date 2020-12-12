@@ -71,7 +71,7 @@ func (b *SpanHandlerBuilder) BuildSpanProcessor() processor.SpanProcessor {
 		Options.DynQueueSizeMemory(b.CollectorOpts.DynQueueSizeMemory),
 		// adaptive sampling options place from here
 		Options.LruCapacity(b.CollectorOpts.LruCapacity),
-		Options.MaxRetries(b.CollectorOpts.MaxRetries),
+		Options.RetryQueueItemExpire(b.CollectorOpts.RetryQueueItemExpire),
 		Options.StoreRefreshInterval(b.CollectorOpts.StoreRefreshInterval),
 		Options.AdaptiveSamplingSpanFilter(b.SpanFilter),
 		Options.StrategyStore(b.StrategyStore),

@@ -30,19 +30,19 @@ import (
 
 const (
 	// DefaultNumWorkers is the default number of workers consuming from the processor queue
-	DefaultNumWorkers = 50
+	DefaultNumWorkers = 10
 	// DefaultQueueSize is the size of the processor's queue
-	DefaultQueueSize = 2000
+	DefaultQueueSize = 100000
 	// DefaultLruCapacity is the capacity of LRU which contains key-value pairs
-	DefaultLruCapacity = 10000
-	// DefaultMaxRetries is the maximum retires of span to update trace graph
-	DefaultMaxRetries = 10
+	DefaultLruCapacity = 100000
 	// DefaultFilterTagsFileName is the default filter tags filename for filtering spans
 	DefaultFilterTagsFileName = "filter-config.json"
 	// DefaultRetryQueueNumWorkers is the default number of workers consuming from the retry queue
-	DefaultRetryQueueNumWorkers = 5
+	DefaultRetryQueueNumWorkers = 2
 	// DefaultStoreRefreshInterval is the refresh interval between refreshing operation for store
 	DefaultStoreRefreshInterval = time.Minute
+
+	DefaultRetryQueueItemExpire = time.Second * 30
 )
 
 type options struct {
@@ -64,12 +64,12 @@ type options struct {
 
 	// Adaptive sampling
 	lruCapacity          int
-	maxRetires           int
 	asSpanFilter         filter.SpanFilter // as, short for adaptive sampling
 	filterTagsFilename   string
 	store                sampling.AdaptiveStrategyStore
 	retryQueueNumWorkers int
 	storeRefreshInterval time.Duration
+	retryQueueItemExpire time.Duration
 }
 
 // Option is a function that sets some option on StorageBuilder.
@@ -191,14 +191,6 @@ func (options) LruCapacity(capacity int) Option {
 	}
 }
 
-// MaxRetries creates an Option that initializes the maximum retries for update trace graph
-// in adaptive sampling span processor.
-func (options) MaxRetries(retries int) Option {
-	return func(o *options) {
-		o.maxRetires = retries
-	}
-}
-
 // AdaptiveSamplingSpanFilter creates an Option that initializes span filter for adaptive sampling.
 func (options) AdaptiveSamplingSpanFilter(filter filter.SpanFilter) Option {
 	return func(o *options) {
@@ -227,6 +219,12 @@ func (options) RetryQueueNumWorkers(retryQueueNumWorkers int) Option {
 func (options) StoreRefreshInterval(interval time.Duration) Option {
 	return func(c *options) {
 		c.storeRefreshInterval = interval
+	}
+}
+
+func (options) RetryQueueItemExpire(expire time.Duration) Option {
+	return func(c *options) {
+		c.retryQueueItemExpire = expire
 	}
 }
 
@@ -264,9 +262,6 @@ func (o options) apply(opts ...Option) options {
 	if ret.lruCapacity == 0 {
 		ret.lruCapacity = DefaultLruCapacity
 	}
-	if ret.maxRetires == 0 {
-		ret.maxRetires = DefaultMaxRetries
-	}
 	if ret.asSpanFilter == nil {
 		ret.asSpanFilter = filter.NewNullSpanFilter()
 	}
@@ -282,6 +277,8 @@ func (o options) apply(opts ...Option) options {
 	if ret.storeRefreshInterval == 0 {
 		ret.storeRefreshInterval = DefaultStoreRefreshInterval
 	}
-
+	if ret.retryQueueItemExpire == 0 {
+		ret.retryQueueItemExpire = DefaultRetryQueueItemExpire
+	}
 	return ret
 }

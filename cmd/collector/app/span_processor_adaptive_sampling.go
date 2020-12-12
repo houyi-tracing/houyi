@@ -38,6 +38,7 @@ type AdaptiveSamplingSpanProcessor struct {
 	store                sampling.AdaptiveStrategyStore
 	lru                  cache.LRU // key: spanID, value: ExecutionGraphNode
 	retryQueue           *queue.BoundedQueue
+	retryQueueItemExpire time.Duration
 
 	// ATTENTION: spanFilter is different from the filterSpan of spanProcessor.
 	// This one filters spans that meets conditions for increasing the sampling probability of them.
@@ -46,11 +47,11 @@ type AdaptiveSamplingSpanProcessor struct {
 }
 
 // The retry queue stores those spans that failed to update trace graph due to delay of parent spans.
-// A span would NOT be pushed to retry queue when it reaches the maximum retries(maxRetires).
+// A span would NOT be pushed to retry queue when it's expired.
 type retryQueueItem struct {
 	span     *model.Span
 	parentID model.SpanID
-	retries  int
+	since    time.Time
 }
 
 func NewAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Option) processor.SpanProcessor {
@@ -118,10 +119,10 @@ func newAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Optio
 	adsp := AdaptiveSamplingSpanProcessor{
 		retryQueue:           retryQueue,
 		retryQueueNumWorkers: options.retryQueueNumWorkers,
+		retryQueueItemExpire: options.retryQueueItemExpire,
 		spanFilter:           options.asSpanFilter,
 		spanProcessor:        &sp,
 		lru:                  cache.NewLRU(options.lruCapacity),
-		maxRetries:           options.maxRetires,
 		store:                options.store,
 	}
 
@@ -157,7 +158,7 @@ func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
 		sp.retryQueue.Produce(&retryQueueItem{
 			span:     span,
 			parentID: parentID,
-			retries:  0,
+			since:    time.Now(),
 		})
 	} else {
 		sp.store.AddAsRoot(operation)
@@ -192,8 +193,7 @@ func (sp *AdaptiveSamplingSpanProcessor) processItemFromRetryQueue(item *retryQu
 				zap.Error(err))
 		}
 	} else {
-		if item.retries < sp.maxRetries {
-			item.retries += 1
+		if time.Now().Add(sp.retryQueueItemExpire).After(time.Now()) {
 			sp.retryQueue.Produce(item)
 		}
 	}
