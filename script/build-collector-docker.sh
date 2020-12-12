@@ -1,4 +1,3 @@
 #!/bin/bash
 
-docker build -t houyitracing/houyi-collector .
-
+docker build -t houyitracing/collector .

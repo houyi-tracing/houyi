@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 ROOT_CMD='docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector'
 
@@ -32,6 +32,8 @@ fi
 if [[ -n $OPERATION_DURATION ]]; then
   ROOT_CMD="${ROOT_CMD} --env OPERATION_DURATION=${OPERATION_DURATION}"
 fi
+
+ROOT_CMD="${ROOT_CMD} houyitracing/collector"
 
 echo $ROOT_CMD
 eval $ROOT_CMD
