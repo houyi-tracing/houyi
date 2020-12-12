@@ -9,27 +9,27 @@ else
   ROOT_CMD="${ROOT_CMD} --env CASSANDRA_SERVERS=${CASSANDRA_SERVERS}"
 fi
 
-if [[ -n $LOG_LEVEL ]]; then
+if [[ $LOG_LEVEL ]]; then
   ROOT_CMD="${ROOT_CMD} --env LOG_LEVEL=${LOG_LEVEL}"
 fi
 
-if [[ -n $MAX_NUM_CHILD_NODES ]]; then
+if [[ $MAX_NUM_CHILD_NODES ]]; then
   ROOT_CMD="${ROOT_CMD} --env MAX_NUM_CHILD_NODES=${MAX_NUM_CHILD_NODES}"
 fi
 
-if [[ -n $MAX_SAMPLING_RATE ]]; then
+if [[ $MAX_SAMPLING_RATE ]]; then
   ROOT_CMD="${ROOT_CMD} --env MAX_SAMPLING_RATE=${MAX_SAMPLING_RATE}"
 fi
 
-if [[ -n $MIN_SAMPLING_RATE ]]; then
+if [[ $MIN_SAMPLING_RATE ]]; then
   ROOT_CMD="${ROOT_CMD} --env MIN_SAMPLING_RATE=${MIN_SAMPLING_RATE}"
 fi
 
-if [[ -n $AMPLIFICATION_FACTOR ]]; then
+if [[ $AMPLIFICATION_FACTOR ]]; then
   ROOT_CMD="${ROOT_CMD} --env AMPLIFICATION_FACTOR=${AMPLIFICATION_FACTOR}"
 fi
 
-if [[ -n $OPERATION_DURATION ]]; then
+if [[ $OPERATION_DURATION ]]; then
   ROOT_CMD="${ROOT_CMD} --env OPERATION_DURATION=${OPERATION_DURATION}"
 fi
 
