@@ -44,3 +44,4 @@ docker build -t houyitracing/houyi-agent .
 EOF
 chmod u+x ${BUILD_AGENT_DOCKER}
 mv ${BUILD_AGENT_DOCKER} ${BUILD_OUT_DIR}/
+
