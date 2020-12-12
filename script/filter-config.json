@@ -1,0 +1,14 @@
+{
+  "filter-tags": [
+    {
+      "key": "http.status_code",
+      "operation": "!=",
+      "value": 200
+    },
+    {
+      "key": "error",
+      "operation": "==",
+      "value": true
+    }
+  ]
+}

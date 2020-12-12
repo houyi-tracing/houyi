@@ -11,20 +11,11 @@ mkdir -p ${BUILD_OUT_DIR}
 CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -tags netgo -o ${BUILD_OUT_DIR}/${COMPONENT} -v ${WORK_DIR}/main.go
 
 FILTER_CONFIG=filter-config.json
-cat <<EOF > ${FILTER_CONFIG}
-{
-  "filter-tags": []
-}
-EOF
 mv ${FILTER_CONFIG} ${BUILD_OUT_DIR}/
 
 RUN_COLLECTOR=run-collector.sh
-cat <<EOF > ${RUN_COLLECTOR}
-#!/bin/sh
-./collector --sampling.max-num-child-nodes=\${MAX_NUM_CHILD_NODES} --cassandra.servers=\${CASSANDRA_SERVERS}
-EOF
 chmod u+x ${RUN_COLLECTOR}
-mv ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
+cp ${RUN_COLLECTOR} ${BUILD_OUT_DIR}/
 
 cat <<EOF > Dockerfile
 FROM alpine:3.7
@@ -38,27 +29,9 @@ EOF
 mv Dockerfile ${BUILD_OUT_DIR}/
 
 RUN_COLLECTOR_DOCKER=run-collector-docker.sh
-cat <<EOF > ${RUN_COLLECTOR_DOCKER}
-#!/bin/sh
-if [[ -z \${MAX_NUM_CHILD_NODES} ]]; then
-  MAX_NUM_CHILD_NODES=4
-fi
-if [[ -z \${CASSANDRA_SERVERS} ]]; then
-  echo "at least one cassandra server is required"
-  return
-fi
-echo "MAX_NUM_CHILD_NODES=\${MAX_NUM_CHILD_NODES}"
-echo "CASSANDRA_SERVERS=\${CASSANDRA_SERVERS}"
-echo "Starting collector..."
-docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector --env CASSANDRA_SERVERS=\${CASSANDRA_SERVERS} --env MAX_NUM_CHILD_NODES=\${MAX_NUM_CHILD_NODES} houyi-collector
-EOF
 chmod u+x ${RUN_COLLECTOR_DOCKER}
 mv ${RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
 
 BUILD_RUN_COLLECTOR_DOCKER=build-collector-docker.sh
-cat <<EOF > ${BUILD_RUN_COLLECTOR_DOCKER}
-#!/bin/sh
-docker build -t houyitracing/houyi-collector .
-EOF
 chmod u+x ${BUILD_RUN_COLLECTOR_DOCKER}
-mv ${BUILD_RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
+cp ${BUILD_RUN_COLLECTOR_DOCKER} ${BUILD_OUT_DIR}/
