@@ -198,6 +198,14 @@ func (t *traceGraph) Refresh(node ExecutionGraphNode) {
 	}
 }
 
+func (t *traceGraph) IsRoot(svc, op string) bool {
+	if node, err := t.nodes.Get(svc, op); err == nil {
+		return node.HasOut(t.fakeRoot)
+	} else {
+		return false
+	}
+}
+
 func (t *traceGraph) has(svc, op string) bool {
 	if node, err := t.nodes.Get(svc, op); node != nil && err == nil {
 		t.timer.Timing(node, t.duration)

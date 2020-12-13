@@ -86,6 +86,9 @@ type ExecutionGraph interface {
 	// HasEdge returns true if there is one and only one edge between inpputed two nodes.
 	HasEdge(from, to ExecutionGraphNode) bool
 
+	// IsRoot returns true if this operation of service svc is root node, else false.
+	IsRoot(svc, op string) bool
+
 	// RemoveExpired removes all expired nodes and their edges.
 	RemoveExpired() []ExecutionGraphNode
 

@@ -164,8 +164,12 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 	ass.mux.Lock()
 	defer ass.mux.Unlock()
 
-	// before generate strategies, we must update QPS of inputted operations.
-	ass.updateQpsAndRefreshInterval(service, operations.Operations, refreshInterval)
+	// before generate strategies, we must update QPS of root operations.
+	for _, op := range operations.Operations {
+		if ass.traceGraph.IsRoot(service, op.Name) {
+			ass.updateQpsAndRefreshInterval(service, op.Name, op.Qps, refreshInterval)
+		}
+	}
 
 	strategies := make([]*sampling.OperationSamplingStrategy, 0, len(operations.Operations))
 	for _, op := range operations.Operations {
@@ -214,50 +218,50 @@ func (ass *adaptiveStrategyStore) Promote(span *model.Span) {
 }
 
 // updateQpsAndRefreshInterval updates the QPS and sampling refresh interval of inputted service.
-func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service string, operations []model2.Operation, interval time.Duration) {
+func (ass *adaptiveStrategyStore) updateQpsAndRefreshInterval(service, operation string, qps float64, interval time.Duration) {
 	now := time.Now()
-
-	for _, op := range operations {
-		_, ok := ass.qps[service]
-		if !ok {
-			ass.qps[service] = make(map[string]*qpsEntry)
-		}
-		if qE, has := ass.qps[service][op.Name]; has {
-			qE.qps = op.Qps
-			qE.upSince = now
-		} else {
-			ass.qps[service][op.Name] = &qpsEntry{
-				qps:     op.Qps,
-				upSince: now,
-			}
+	_, hasSvc := ass.qps[service]
+	if !hasSvc {
+		ass.qps[service] = make(map[string]*qpsEntry)
+	}
+	if qE, hasOp := ass.qps[service][operation]; hasOp {
+		qE.qps = qps
+		qE.upSince = now
+	} else {
+		ass.qps[service][operation] = &qpsEntry{
+			qps:     qps,
+			upSince: now,
 		}
 	}
-
 	ass.maxRemoteRefreshInterval = maxDuration(ass.maxRemoteRefreshInterval, interval+time.Minute)
 }
 
 // qpsWeightCoefficient returns the weight Coefficient of service.
 // The service with higher QPS would get lower qpsWeightCoefficient.
 func (ass *adaptiveStrategyStore) qpsWeightCoefficient(service, operation string) float64 {
-	if _, has := ass.qps[service]; has {
-		if qE, has := ass.qps[service][operation]; has {
-			if qE.qps == 0 {
-				return 1.0
-			} else {
-				sum := 0.0
-				for _, opMap := range ass.qps {
-					for _, qps := range opMap {
-						if qps.qps != 0 {
-							sum += 1.0 / qps.qps
+	if ass.traceGraph.IsRoot(service, operation) {
+		if _, has := ass.qps[service]; has {
+			if qE, has := ass.qps[service][operation]; has {
+				if qE.qps == 0 {
+					return 1.0
+				} else {
+					sum := 0.0
+					for _, opMap := range ass.qps {
+						for _, qps := range opMap {
+							if qps.qps != 0 {
+								sum += 1.0 / qps.qps
+							}
 						}
 					}
+					return (1 / qE.qps) / sum
 				}
-				return (1 / qE.qps) / sum
 			}
 		}
+		ass.logger.Error("try to calculate qps weight for non-exist operation", zap.String("operation name", operation))
+		return 0
+	} else {
+		return 1.0
 	}
-	ass.logger.Error("try to calculate qps weight for non-exist operation", zap.String("operation name", operation))
-	return 0
 }
 
 func maxDuration(d1, d2 time.Duration) time.Duration {
