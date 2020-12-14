@@ -29,7 +29,8 @@ type treeNode struct {
 	// maximum number of children
 	maxChildrenN int
 
-	// number of leaf nodes in the tree, if this node is a leaf node, the value of this filed is 0.
+	// number of leaf nodes in this tree, if this node is a leaf node,
+	// the value of this filed is 0.
 	leafCnt int
 
 	// children nodes
