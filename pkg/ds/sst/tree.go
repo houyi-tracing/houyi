@@ -24,7 +24,7 @@ type sampleStrategyTree struct {
 
 	maxChildrenN int
 	root         TreeNode
-	nodeMap      TreeNodeMap
+	leafNodeMap  TreeNodeMap
 }
 
 // NewSampleStrategyTree returns a new SST pointer.
@@ -32,33 +32,33 @@ func NewSampleStrategyTree(maxChildrenN int, logger *zap.Logger) SampleStrategyT
 	sst := &sampleStrategyTree{
 		maxChildrenN: maxChildrenN,
 		root:         newTreeNode(maxChildrenN, nil),
-		nodeMap:      NewTreeNodeMap(),
+		leafNodeMap:  NewTreeNodeMap(),
 		logger:       logger,
 	}
 	return sst
 }
 
 func (t *sampleStrategyTree) AddService(service string) {
-	if !t.nodeMap.HasSvc(service) {
-		t.nodeMap.AddSvc(service)
+	if !t.leafNodeMap.HasSvc(service) {
+		t.leafNodeMap.AddSvc(service)
 	}
 }
 
 func (t *sampleStrategyTree) Add(service string, operation string) {
-	if !t.nodeMap.HasOp(service, operation) {
+	if !t.leafNodeMap.HasOp(service, operation) {
 		leafNode := newLeafNode(service, operation, t.maxChildrenN, nil)
 		t.root.InsertAsDesc(leafNode)
-		t.nodeMap.AddOp(service, operation, leafNode)
+		t.leafNodeMap.AddOp(service, operation, leafNode)
 	}
 }
 
 func (t *sampleStrategyTree) All() map[string][]string {
-	return t.nodeMap.All()
+	return t.leafNodeMap.All()
 }
 
 func (t *sampleStrategyTree) Promote(service, operation string) error {
-	if t.nodeMap.HasOp(service, operation) {
-		promNode, err := t.nodeMap.GetNode(service, operation)
+	if t.leafNodeMap.HasOp(service, operation) {
+		promNode, err := t.leafNodeMap.GetNode(service, operation)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func (t *sampleStrategyTree) GetSamplingRate() map[string]map[string]float64 {
 }
 
 func (t *sampleStrategyTree) GetServiceSamplingRate(service string) (map[string]float64, error) {
-	if ops, err := t.nodeMap.GetOps(service); err == nil {
+	if ops, err := t.leafNodeMap.GetOps(service); err == nil {
 		retMe := make(map[string]float64)
 		for op, tNode := range ops {
 			retMe[op] = getSamplingRateFromBottomToTop(tNode)
@@ -95,7 +95,7 @@ func (t *sampleStrategyTree) GetServiceSamplingRate(service string) (map[string]
 }
 
 func (t *sampleStrategyTree) GetOperationSamplingRate(service, operation string) (float64, error) {
-	if node, err := t.nodeMap.GetNode(service, operation); err == nil {
+	if node, err := t.leafNodeMap.GetNode(service, operation); err == nil {
 		return getSamplingRateFromBottomToTop(node), nil
 	} else {
 		return 0, err
@@ -103,7 +103,7 @@ func (t *sampleStrategyTree) GetOperationSamplingRate(service, operation string)
 }
 
 func (t *sampleStrategyTree) Remove(service, operation string) {
-	if toRmNode, err := t.nodeMap.GetNode(service, operation); err == nil {
+	if toRmNode, err := t.leafNodeMap.GetNode(service, operation); err == nil {
 		if !toRmNode.IsLeaf() {
 			t.logger.Error("for removing operation, the tree node relate to it to remove must be leaf node",
 				zap.String("service", service),
@@ -115,21 +115,21 @@ func (t *sampleStrategyTree) Remove(service, operation string) {
 		if parent != t.root {
 			parent.PathDepression()
 		}
-		t.nodeMap.Delete(service, operation)
+		t.leafNodeMap.Delete(service, operation)
 	}
 }
 
 func (t *sampleStrategyTree) Prune(threshold float64) {
-	removeLeafNodeWithThreshold(nil, t.root, 1, threshold, t.nodeMap)
+	removeLeafNodeWithThreshold(nil, t.root, 1, threshold, t.leafNodeMap)
 	updateLeafCnt(t.root)
 }
 
 func (t *sampleStrategyTree) Has(service, operation string) bool {
-	return t.nodeMap.HasOp(service, operation)
+	return t.leafNodeMap.HasOp(service, operation)
 }
 
 func (t *sampleStrategyTree) HasService(service string) bool {
-	return t.nodeMap.HasSvc(service)
+	return t.leafNodeMap.HasSvc(service)
 }
 
 // getSampleStrategy generates sample strategy from this SST and returns a map.
