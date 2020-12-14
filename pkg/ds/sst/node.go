@@ -114,7 +114,7 @@ func (n *treeNode) Parent() TreeNode {
 	return n.parent
 }
 
-func (n *treeNode) PathDepression() {
+func (n *treeNode) PathCompression() {
 	if !n.IsLeaf() && n.childNodes.Size() == 1 {
 		onlyChild := n.childNodes.Keys()[0].(*treeNode)
 		parent := n.parent.(*treeNode)

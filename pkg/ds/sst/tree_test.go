@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"math"
+	"os"
 	"testing"
 )
 
@@ -147,4 +148,91 @@ func TestPromote(t *testing.T) {
 
 	checkLeafCnt(sst, t)
 	checkSampleStrategy(t, sst.GetSamplingRate())
+}
+
+func TestSST(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	svc := "svc"
+	ops := []string{"A", "B", "C", "D", "E", "F"}
+	sst := NewSampleStrategyTree(2, logger)
+	for _, op := range ops {
+		sst.Add(svc, op)
+	}
+
+	sr := sst.GetSamplingRate()
+	for _, op := range ops {
+		fmt.Printf("%f\t", sr[svc][op])
+	}
+	fmt.Println()
+
+	for _, op := range ops {
+		_ = sst.Promote(svc, op)
+		sr = sst.GetSamplingRate()
+		for _, op := range ops {
+			fmt.Printf("%f\t", sr[svc][op])
+		}
+		fmt.Println()
+	}
+}
+
+func TestSSTLargeScale(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	svc := "svc"
+	n := 100
+	maxCN := 8
+
+	opts := make([]string, 0)
+	for i := 0; i < n; i++ {
+		opts = append(opts, fmt.Sprintf("op%d", i))
+	}
+
+	sst := NewSampleStrategyTree(maxCN, logger)
+	for _, op := range opts {
+		sst.Add(svc, op)
+	}
+
+	f, err := os.OpenFile("sst_test.csv", os.O_TRUNC|os.O_CREATE, 0655)
+
+	writeToFile := func(sr map[string]map[string]float64) {
+		if err != nil {
+			logger.Error("", zap.Error(err))
+		}
+		for i, op := range opts {
+			f.WriteString(fmt.Sprintf("%f", sr[svc][op]))
+			if i != len(opts)-1 {
+				f.WriteString(",")
+			} else {
+				f.WriteString("\n")
+			}
+		}
+	}
+
+	check := func(sr map[string]map[string]float64) bool {
+		sum := 0.0
+		for _, opMap := range sr {
+			for _, srVal := range opMap {
+				sum += srVal
+			}
+		}
+		return (sum - 1.0) < 0.00001
+	}
+
+	writeToFile(sst.GetSamplingRate())
+
+	toPromote := map[int]int{
+		0:  2,
+		20: 4,
+		40: 2,
+		60: 1,
+		80: 5,
+	}
+
+	for _, opN := range []int{0, 20, 40, 60, 80} {
+		for i := 0; i < toPromote[opN]; i++ {
+			sst.Promote(svc, fmt.Sprintf("op%d", opN))
+			sr := sst.GetSamplingRate()
+			writeToFile(sr)
+			assert.True(t, check(sr))
+		}
+	}
 }

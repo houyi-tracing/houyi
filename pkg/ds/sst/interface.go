@@ -90,7 +90,7 @@ type TreeNode interface {
 
 	// PathDepression removes current node which has only one child node and
 	// makes it's only child node to replace it.
-	PathDepression()
+	PathCompression()
 
 	// RemoveChild deletes the input child node of current node.
 	RemoveChild(TreeNode)

@@ -113,7 +113,7 @@ func (t *sampleStrategyTree) Remove(service, operation string) {
 		parent := toRmNode.Parent()
 		parent.RemoveChild(toRmNode)
 		if parent != t.root {
-			parent.PathDepression()
+			parent.PathCompression()
 		}
 		t.leafNodeMap.Delete(service, operation)
 	}
@@ -164,14 +164,16 @@ func (t *sampleStrategyTree) getSampleStrategy(
 func (t *sampleStrategyTree) promoteChild(grandParent, parent, child TreeNode) {
 	if grandParent.HasChild(parent) && parent.HasChild(child) && child.IsLeaf() {
 		parent.RemoveChild(child)
-		demoteNode := grandParent.(*treeNode).childNodes.Add(child).(TreeNode)
+		demoteNode := grandParent.AddChild(child)
 		if demoteNode != nil {
 			// demoteNode != nil means that grandParent node has not room to add child.
 			// In this case, it would remove the LRU node among its child nodes and returns it.
 			// To receive the returned node, current node parent would add it as a child.
 			parent.AddChild(demoteNode)
 		} else {
-			parent.PathDepression()
+			if parent.Parent() != t.root {
+				parent.PathCompression()
+			}
 		}
 	}
 }
