@@ -61,8 +61,9 @@ type SampleStrategyTree interface {
 
 type TreeNode interface {
 	// AddChild add a node as a child of current node.
-	// This method would return a previous least-recently-used child node of current node if there has not room for adding
-	// a new child for current node.
+	// This method would return a previous least-recently-used child
+	// node of current node if there has not room for adding a new
+	// child for current node.
 	AddChild(TreeNode) TreeNode
 
 	// Children return a slice that contains all child nodes of current node.
@@ -74,7 +75,7 @@ type TreeNode interface {
 	// HasChild returns true if input node is child of current node.
 	HasChild(TreeNode) bool
 
-	// HasRoom returns true if the number of current node's children has not exceed.
+	// HasRoom returns true if the number of current node's children has not exceed
 	// the maximum, else false.
 	HasRoom() bool
 
@@ -87,7 +88,8 @@ type TreeNode interface {
 	// Parent returns the parent node of current node.
 	Parent() TreeNode
 
-	// PathDepression removes current node which has only one child node and makes it's only child node to replace it.
+	// PathDepression removes current node which has only one child node and
+	// makes it's only child node to replace it.
 	PathDepression()
 
 	// RemoveChild deletes the input child node of current node.
