@@ -26,7 +26,7 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: collector-v1
+  name: houyi-collector-v1
   labels:
     app: houyi-collector
     version: v1
