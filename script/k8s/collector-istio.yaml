@@ -15,7 +15,7 @@ spec:
     - port:
         number: 14269
         name: admin-http
-        protocal: HTTP
+        protocol: HTTP
       hosts:
         - "*"
     - port:
@@ -53,8 +53,7 @@ spec:
               number: 14268
             subset: v1
   tcp:
-    - name: "collector-tcp"
-      match:
+    - match:
         - port: 14250
       route:
         - destination:
