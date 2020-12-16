@@ -51,7 +51,7 @@ spec:
             - name: MAX_NUM_CHILD_NODES
               value: "4"
             - name: CASSANDRA_SERVERS
-              value: "133.133.135.38"
+              value: "houyi-collector"
             - name: LOG_LEVEL
               value: "debug"
           ports:
