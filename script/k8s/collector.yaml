@@ -1,12 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: houyi-collector
+  name: collector
   labels:
-    app: houyi-collector
-    service: houyi-collector
+    app: collector
+    service: collector
 spec:
-  type: ClusterIP
   ports:
     - port: 14268
       name: http
@@ -22,25 +21,25 @@ kind: ServiceAccount
 metadata:
   name: houyi-collector
   labels:
-    account: houyi-collector
+    account: collector
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: houyi-collector-v1
+  name: collector-v1
   labels:
-    app: houyi-collector
+    app: collector
     version: v1
 spec:
   selector:
     matchLabels:
-      app: houyi-collector
+      app: collector
       version: v1
   replicas: 1
   template:
     metadata:
       labels:
-        app: houyi-collector
+        app: collector
         version: v1
     spec:
       serviceAccountName: houyi-collector
@@ -50,9 +49,9 @@ spec:
           imagePullPolicy: Always
           env:
             - name: MAX_NUM_CHILD_NODES
-              value: "3"
+              value: "4"
             - name: CASSANDRA_SERVERS
-              value: "133.133.135.38"
+              value: "192.168.31.229"
             - name: LOG_LEVEL
               value: "debug"
           ports:
