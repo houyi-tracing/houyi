@@ -3,7 +3,7 @@
 ROOT_CMD="./agent"
 
 if [[ $COLLECTOR_SERVICE_HOST ]]; then
-  ROOT_CMD="${ROOT_CMD} --reporter.grpc.host-port=${COLLECTOR_SERVICE_HOST}:14250 --collector.host=${COLLECTOR_SERVICE_HOST}"
+  ROOT_CMD="${ROOT_CMD} --reporter.grpc.host-port=http://houyi-collector:14250 --collector.host=houyi-collector"
 else
   echo "\$COLLECTOR_SERVICE_HOST must be set"
   exit -1
