@@ -21,7 +21,7 @@ kind: ServiceAccount
 metadata:
   name: houyi-collector
   labels:
-    account: collector
+    account: houyi-collector
 ---
 apiVersion: apps/v1
 kind: Deployment
