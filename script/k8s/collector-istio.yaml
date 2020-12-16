@@ -48,7 +48,7 @@ spec:
             prefix: /api/update_filter
       route:
         - destination:
-            host: houyi-collector
+            host: collector
             port:
               number: 14268
             subset: v1
@@ -57,7 +57,7 @@ spec:
         - port: 14250
       route:
         - destination:
-            host: houyi-collector
+            host: collector
             port:
               number: 14250
             subset: v1
@@ -66,9 +66,9 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: houyi-collector
+  name: collector
 spec:
-  host: houyi-collector
+  host: collector
   subsets:
     - name: v1
       labels:
