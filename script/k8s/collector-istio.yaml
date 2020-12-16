@@ -1,0 +1,77 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: houyi-collector
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 14268
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+    - port:
+        number: 14269
+        name: admin-http
+        protocal: HTTP
+      hosts:
+        - "*"
+    - port:
+        number: 14250
+        name: grpc
+        protocol: GRPC
+      hosts:
+        - "*"
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: houyi-collector
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - houyi-collector
+  http:
+    - name: "collector-http"
+      match:
+        - uri:
+            prefix: /api/strategy
+        - uri:
+            prefix: /api/filter_tags
+        - uri:
+            prefix: /api/traces
+        - uri:
+            prefix: /api/update_filter
+      route:
+        - destination:
+            host: houyi-collector
+            port:
+              number: 14268
+            subset: v1
+  tcp:
+    - name: "collector-tcp"
+      match:
+        - port: 14250
+      route:
+        - destination:
+            host: houyi-collector
+            port:
+              number: 14250
+            subset: v1
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: houyi-collector
+spec:
+  host: houyi-collector
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+---
