@@ -171,7 +171,9 @@ func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
 func (sp *AdaptiveSamplingSpanProcessor) filterSpanToPromote(span *model.Span) {
 	if sp.spanFilter.Filter(span) {
 		sp.store.Promote(span)
-		sp.logger.Debug("promoted operation", zap.Stringer("span", span))
+		sp.logger.Debug("promoted operation",
+			zap.String("service", span.GetProcess().GetServiceName()),
+			zap.String("operation", span.GetOperationName()))
 	}
 }
 
