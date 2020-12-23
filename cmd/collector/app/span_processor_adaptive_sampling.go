@@ -199,6 +199,7 @@ func (sp *AdaptiveSamplingSpanProcessor) processItemFromRetryQueue(item *retryQu
 			sp.retryQueue.Produce(item)
 		}
 	}
+
 }
 
 func (sp *AdaptiveSamplingSpanProcessor) ProcessSpans(mSpans []*model.Span, options processor.SpansOptions) ([]bool, error) {
