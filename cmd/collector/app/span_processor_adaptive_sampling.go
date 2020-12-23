@@ -37,8 +37,6 @@ type AdaptiveSamplingSpanProcessor struct {
 	retryQueueNumWorkers int
 	store                sampling.AdaptiveStrategyStore
 	lru                  cache.LRU // key: spanID, value: ExecutionGraphNode
-	retryQueue           *queue.BoundedQueue
-	retryQueueItemExpire time.Duration
 
 	// ATTENTION: spanFilter is different from the filterSpan of spanProcessor.
 	// This one filters spans that meets conditions for increasing the sampling probability of them.
@@ -62,14 +60,6 @@ func NewAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Optio
 			sp.processItemFromQueue(qItem)
 		} else {
 			sp.logger.Error("failed to convert to queueItem")
-		}
-	})
-
-	sp.retryQueue.StartConsumers(sp.retryQueueNumWorkers, func(item interface{}) {
-		if rQItem, ok := item.(*retryQueueItem); ok {
-			sp.processItemFromRetryQueue(rQItem)
-		} else {
-			sp.logger.Error("failed to convert to retryQueueItem")
 		}
 	})
 
@@ -111,15 +101,8 @@ func newAdaptiveSamplingSpanProcessor(spanWriter spanstore.Writer, opts ...Optio
 		spansProcessed:     atomic.NewUint64(0),
 	}
 
-	retryQueueDroppedItemHandler := func(item interface{}) {
-		retryQItem := item.(*retryQueueItem)
-		sp.logger.Info("retry queue dropped span", zap.String("operation name", retryQItem.span.OperationName))
-	}
-	retryQueue := queue.NewBoundedQueue(options.queueSize, retryQueueDroppedItemHandler)
 	adsp := AdaptiveSamplingSpanProcessor{
-		retryQueue:           retryQueue,
 		retryQueueNumWorkers: options.retryQueueNumWorkers,
-		retryQueueItemExpire: options.retryQueueItemExpire,
 		spanFilter:           options.asSpanFilter,
 		spanProcessor:        &sp,
 		lru:                  cache.NewLRU(options.lruCapacity),
@@ -145,26 +128,31 @@ func (sp *AdaptiveSamplingSpanProcessor) UpdateFilter(newFilter filter.SpanFilte
 }
 
 func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
-	operation := &model2.Operation{
-		Service: span.GetProcess().GetServiceName(),
-		Name:    span.GetOperationName(),
-	}
-	sp.store.Add(operation)
-	sp.lru.Put(span.SpanID, operation)
-
-	parentID := span.ParentSpanID()
-	if parentID != 0 {
-		// only those spans which have parent spanIDs would be pushed into retryQueue for updating trace graph.
-		sp.retryQueue.Produce(&retryQueueItem{
-			span:     span,
-			parentID: parentID,
-			since:    time.Now(),
-		})
+	parentSvc, parentOp := sp.getTagValue(span, "parent_service"), sp.getTagValue(span, "parent_operation")
+	currentSvc, currentOp := span.GetProcess().GetServiceName(), span.GetOperationName()
+	if parentSvc != "" && parentOp != "" {
+		parent := &model2.Operation{
+			Service: parentSvc,
+			Name:    parentOp,
+		}
+		child := &model2.Operation{
+			Service: currentSvc,
+			Name:    currentOp,
+		}
+		sp.store.Add(parent)
+		sp.store.Add(child)
+		if err := sp.store.AddEdge(parent, child); err != nil {
+			sp.logger.Error("failed to add edge", zap.Error(err))
+		}
 	} else {
-		sp.store.AddAsRoot(operation)
-		sp.logger.Debug("new root operation",
-			zap.String("service", operation.Service),
-			zap.String("operation", operation.Name))
+		newRoot := &model2.Operation{
+			Service: currentSvc,
+			Name:    currentOp,
+		}
+		sp.store.AddAsRoot(newRoot)
+		sp.logger.Debug("found new root operation",
+			zap.String("service", currentSvc),
+			zap.String("operation", currentOp))
 	}
 }
 
@@ -175,31 +163,6 @@ func (sp *AdaptiveSamplingSpanProcessor) filterSpanToPromote(span *model.Span) {
 			zap.String("service", span.GetProcess().GetServiceName()),
 			zap.String("operation", span.GetOperationName()))
 	}
-}
-
-func (sp *AdaptiveSamplingSpanProcessor) processItemFromRetryQueue(item *retryQueueItem) {
-	var to, from *model2.Operation
-
-	if lruItem := sp.lru.Get(item.parentID); lruItem != nil {
-		to = lruItem.(*model2.Operation)
-	}
-	if lruItem := sp.lru.Get(item.span.SpanID); lruItem != nil {
-		from = lruItem.(*model2.Operation)
-	}
-
-	if from != nil && to != nil {
-		if err := sp.store.AddEdge(from, to); err != nil {
-			sp.logger.Debug("failed to add edge",
-				zap.Stringer("from", from),
-				zap.Stringer("to", to),
-				zap.Error(err))
-		}
-	} else {
-		if time.Now().Add(sp.retryQueueItemExpire).After(time.Now()) {
-			sp.retryQueue.Produce(item)
-		}
-	}
-
 }
 
 func (sp *AdaptiveSamplingSpanProcessor) ProcessSpans(mSpans []*model.Span, options processor.SpansOptions) ([]bool, error) {
@@ -219,6 +182,15 @@ func (sp *AdaptiveSamplingSpanProcessor) ProcessSpans(mSpans []*model.Span, opti
 func (sp *AdaptiveSamplingSpanProcessor) Close() error {
 	close(sp.stopCh)
 	sp.queue.Stop()
-	sp.retryQueue.Stop()
 	return nil
+}
+
+func (sp *AdaptiveSamplingSpanProcessor) getTagValue(span *model.Span, tagKey string) string {
+	tags := span.GetTags()
+	for _, t := range tags {
+		if t.Key == tagKey {
+			return t.VStr
+		}
+	}
+	return ""
 }
