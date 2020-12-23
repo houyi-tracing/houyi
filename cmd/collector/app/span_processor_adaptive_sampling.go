@@ -150,9 +150,6 @@ func (sp *AdaptiveSamplingSpanProcessor) updateTraceGraph(span *model.Span) {
 			Name:    currentOp,
 		}
 		sp.store.AddAsRoot(newRoot)
-		sp.logger.Debug("found new root operation",
-			zap.String("service", currentSvc),
-			zap.String("operation", currentOp))
 	}
 }
 
