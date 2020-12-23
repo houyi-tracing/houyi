@@ -178,8 +178,8 @@ func TestSST(t *testing.T) {
 func TestSSTLargeScale(t *testing.T) {
 	logger, _ := zap.NewProduction()
 	svc := "svc"
-	n := 100
-	maxCN := 8
+	n := 10
+	maxCN := 3
 
 	opts := make([]string, 0)
 	for i := 0; i < n; i++ {
@@ -220,19 +220,28 @@ func TestSSTLargeScale(t *testing.T) {
 	writeToFile(sst.GetSamplingRate())
 
 	toPromote := map[int]int{
-		0:  2,
-		20: 4,
-		40: 2,
-		60: 1,
-		80: 5,
+		0: 4,
+		1: 4,
+		2: 4,
+		3: 4,
+		4: 4,
+		5: 4,
+		6: 4,
+		7: 4,
+		8: 4,
+		9: 4,
 	}
 
-	for _, opN := range []int{0, 20, 40, 60, 80} {
-		for i := 0; i < toPromote[opN]; i++ {
-			sst.Promote(svc, fmt.Sprintf("op%d", opN))
+	for n, opN := range toPromote {
+		f.WriteString(fmt.Sprintf("PROMOTE: %d\n", n))
+		for i := 0; i < opN; i++ {
+			sst.Promote(svc, fmt.Sprintf("op%d", n))
 			sr := sst.GetSamplingRate()
 			writeToFile(sr)
 			assert.True(t, check(sr))
 		}
+		f.WriteString("\n")
 	}
+
+	f.Close()
 }
