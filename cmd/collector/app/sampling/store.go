@@ -177,6 +177,11 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 			if sr, err := ass.sst.GetOperationSamplingRate(op.Service, op.Name); err == nil {
 				strategies = append(strategies,
 					ass.newOperationSamplingStrategy(service, op.Name, sr))
+				ass.logger.Debug("get sampling rate",
+					zap.String("service", op.Service),
+					zap.String("operation", op.Name),
+					zap.Float64("QPS", op.Qps),
+					zap.Float64("sampling rate", sr))
 			} else {
 				ass.logger.Error("failed to get sampling rate for alive operation",
 					zap.Stringer("operation", op))
