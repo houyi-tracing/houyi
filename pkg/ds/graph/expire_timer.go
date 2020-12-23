@@ -38,7 +38,7 @@ func (e *expirationTimer) IsExpired(node ExecutionGraphNode) (bool, error) {
 		}
 		return false, nil
 	} else {
-		return false, fmt.Errorf("node doest not exist in expiration timer: %v, %v", node.Service(), node.Operation())
+		return true, fmt.Errorf("node doest not exist in expiration timer: %v, %v", node.Service(), node.Operation())
 	}
 }
 

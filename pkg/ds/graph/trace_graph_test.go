@@ -16,6 +16,7 @@ package graph
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"testing"
 	"time"
@@ -102,4 +103,25 @@ func TestGetRoots(t *testing.T) {
 	for _, r := range roots {
 		fmt.Println(r)
 	}
+}
+
+func TestExpired(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	tg := NewExecutionGraph(logger, time.Second*5)
+	svc := "svc1"
+	op := "op1"
+
+	tg.Add(svc, op)
+	time.Sleep(time.Second * 2)
+	tg.RemoveExpired()
+	assert.True(t, tg.Has(svc, op))
+
+	tg.Has(svc, op)
+	time.Sleep(time.Second * 4)
+	tg.RemoveExpired()
+	assert.True(t, tg.Has(svc, op))
+
+	time.Sleep(time.Second * 6)
+	tg.RemoveExpired()
+	assert.False(t, tg.Has(svc, op))
 }

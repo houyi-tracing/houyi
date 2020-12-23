@@ -58,8 +58,10 @@ func (t *traceGraph) Add(service, operation string) ExecutionGraphNode {
 	if node, err := t.nodes.Get(service, operation); err != nil {
 		newNode := NewExecutionGraphNode(service, operation)
 		t.nodes.Add(newNode)
+		t.timer.Timing(newNode, t.duration)
 		return newNode
 	} else {
+		t.timer.Timing(node, t.duration)
 		return node
 	}
 }
@@ -129,7 +131,13 @@ func (t *traceGraph) Has(service string, operation string) bool {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
-	return t.has(service, operation)
+	if t.has(service, operation) {
+		node, _ := t.nodes.Get(service, operation)
+		t.timer.Timing(node, t.duration)
+		return true
+	} else {
+		return false
+	}
 }
 
 func (t *traceGraph) HasEdge(from, to ExecutionGraphNode) bool {
@@ -151,9 +159,6 @@ func (t *traceGraph) RemoveExpired() []ExecutionGraphNode {
 		expired, err := t.timer.IsExpired(node)
 		if expired {
 			t.removeNode(node)
-			t.logger.Debug("remove expired node in trace graph",
-				zap.String("service", node.Service()),
-				zap.String("operation", node.Operation()))
 			removedNodes = append(removedNodes, node)
 		}
 		if err != nil {
@@ -177,6 +182,8 @@ func (t *traceGraph) Remove(rmNode ExecutionGraphNode) {
 func (t *traceGraph) RemoveEdge(from, to ExecutionGraphNode) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
+	defer t.timer.Timing(from, t.duration)
+	defer t.timer.Timing(to, t.duration)
 
 	from.RemoveOut(to)
 	to.RemoveIn(from)
@@ -200,6 +207,9 @@ func (t *traceGraph) Refresh(node ExecutionGraphNode) {
 
 func (t *traceGraph) IsRoot(svc, op string) bool {
 	if node, err := t.nodes.Get(svc, op); err == nil {
+		t.lock.Lock()
+		defer t.lock.Unlock()
+		t.timer.Timing(node, t.duration)
 		return node.HasOut(t.fakeRoot)
 	} else {
 		return false
