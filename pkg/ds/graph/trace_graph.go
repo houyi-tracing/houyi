@@ -82,9 +82,9 @@ func (t *traceGraph) AddRoot(root ExecutionGraphNode) {
 	defer t.lock.Unlock()
 	defer t.timer.Timing(root, t.duration)
 
-	// root -> t.fakeRoot
-	t.fakeRoot.AddIn(root)
-	root.AddOut(t.fakeRoot)
+	// t.fakeRoot -> root
+	t.fakeRoot.AddOut(root)
+	root.AddIn(t.fakeRoot)
 }
 
 func (t *traceGraph) AllServices() []string {
@@ -120,7 +120,7 @@ func (t *traceGraph) GetRootsOf(node ExecutionGraphNode) []ExecutionGraphNode {
 
 	retMe := make([]ExecutionGraphNode, 0)
 	if t.nodes.Has(node) {
-		// TODO
+		retMe = t.searchRoots(node, retMe, set.NewSet())
 	}
 	return retMe
 }
@@ -242,15 +242,13 @@ func (t *traceGraph) searchRoots(node ExecutionGraphNode, roots []ExecutionGraph
 	hasSearched.Add(node)
 
 	// fakeRoot is used to mark some trace graph node as roots.
-	if node.OutN() == 0 || node.HasOut(t.fakeRoot) {
+	if node.HasIn(t.fakeRoot) {
 		roots = append(roots, node)
 	}
 
-	if node.OutN() != 0 {
-		for _, next := range node.GetOuts() {
-			if next != t.fakeRoot {
-				roots = t.searchRoots(next, roots, hasSearched)
-			}
+	for _, next := range node.GetIns() {
+		if next != t.fakeRoot {
+			roots = t.searchRoots(next, roots, hasSearched)
 		}
 	}
 	return roots

@@ -14,6 +14,13 @@
 
 package graph
 
+import (
+	"fmt"
+	"go.uber.org/zap"
+	"testing"
+	"time"
+)
+
 //const (
 //	defaultExpireDuration = time.Minute * 1
 //)
@@ -75,3 +82,24 @@ package graph
 //	tg.RemoveExpired()
 //	assert.Equal(t, 0, tg.Size())
 //}
+
+func TestGetRoots(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	tg := NewExecutionGraph(logger, time.Minute)
+
+	tg.Add("svc1", "op1")
+	tg.Add("svc2", "op2")
+	tg.Add("svc3", "op3")
+	node1, _ := tg.GetNode("svc1", "op1")
+	node2, _ := tg.GetNode("svc2", "op2")
+	node3, _ := tg.GetNode("svc3", "op3")
+	tg.AddEdge(node1, node2)
+	tg.AddEdge(node2, node3)
+	tg.AddRoot(node1)
+	tg.AddRoot(node2)
+
+	roots := tg.GetRootsOf(node3)
+	for _, r := range roots {
+		fmt.Println(r)
+	}
+}
