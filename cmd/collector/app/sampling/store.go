@@ -217,6 +217,11 @@ func (ass *adaptiveStrategyStore) Promote(span *model.Span) {
 		for _, r := range roots {
 			_ = ass.sst.Promote(r.Service(), r.Operation())
 			ass.traceGraph.Refresh(r)
+			ass.logger.Debug("Promoted root operation",
+				zap.String("service", r.Service()),
+				zap.String("operation", r.Operation()),
+				zap.String("span_service", svc),
+				zap.String("span_operation", op))
 		}
 		ass.traceGraph.Refresh(node)
 	}
