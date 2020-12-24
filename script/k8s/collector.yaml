@@ -49,11 +49,11 @@ spec:
           imagePullPolicy: Always
           env:
             - name: MAX_NUM_CHILD_NODES
-              value: "3"
+              value: "4"
             - name: CASSANDRA_SERVERS
               value: "133.133.135.38"
             - name: LOG_LEVEL
-              value: "debug"
+              value: "info"
           ports:
             - containerPort: 14250
             - containerPort: 14268
