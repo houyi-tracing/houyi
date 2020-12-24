@@ -69,8 +69,7 @@ func (ass *adaptiveStrategyStore) Add(operation *model2.Operation) {
 	defer ass.mux.Unlock()
 
 	svc, op := operation.Service, operation.Name
-	node := ass.traceGraph.Add(svc, op)
-	ass.traceGraph.Refresh(node)
+	ass.traceGraph.Add(svc, op)
 }
 
 func (ass *adaptiveStrategyStore) AddAsRoot(operation *model2.Operation) {
@@ -81,7 +80,6 @@ func (ass *adaptiveStrategyStore) AddAsRoot(operation *model2.Operation) {
 	ass.sst.Add(svc, op)
 	node := ass.traceGraph.Add(svc, op)
 	ass.traceGraph.AddRoot(node)
-	ass.traceGraph.Refresh(node)
 }
 
 func (ass *adaptiveStrategyStore) AddEdge(from, to *model2.Operation) error {
@@ -92,8 +90,6 @@ func (ass *adaptiveStrategyStore) AddEdge(from, to *model2.Operation) error {
 		fromNode, _ := ass.traceGraph.GetNode(from.Service, from.Name)
 		toNode, _ := ass.traceGraph.GetNode(to.Service, to.Name)
 		ass.traceGraph.AddEdge(fromNode, toNode)
-		ass.traceGraph.Refresh(fromNode)
-		ass.traceGraph.Refresh(toNode)
 		return nil
 	} else {
 		return fmt.Errorf("add edge for operation not in trace graph")
@@ -113,9 +109,7 @@ func (ass *adaptiveStrategyStore) GetRoots(operation *model2.Operation) ([]*mode
 				Service: r.Service(),
 				Name:    r.Operation(),
 			})
-			ass.traceGraph.Refresh(r)
 		}
-		ass.traceGraph.Refresh(node)
 		return ret, nil
 	} else {
 		return ret, err
@@ -192,7 +186,6 @@ func (ass *adaptiveStrategyStore) GetSamplingStrategies(
 		}
 
 		if node, err := ass.traceGraph.GetNode(service, op.Name); err == nil {
-			ass.traceGraph.Refresh(node)
 			ass.logger.Debug("refresh root operation", zap.Stringer("operation", node))
 		}
 	}
@@ -216,14 +209,12 @@ func (ass *adaptiveStrategyStore) Promote(span *model.Span) {
 		roots := ass.traceGraph.GetRootsOf(node)
 		for _, r := range roots {
 			_ = ass.sst.Promote(r.Service(), r.Operation())
-			ass.traceGraph.Refresh(r)
 			ass.logger.Debug("Promoted root operation",
 				zap.String("service", r.Service()),
 				zap.String("operation", r.Operation()),
 				zap.String("span_service", svc),
 				zap.String("span_operation", op))
 		}
-		ass.traceGraph.Refresh(node)
 	}
 }
 
@@ -283,10 +274,12 @@ func maxDuration(d1, d2 time.Duration) time.Duration {
 }
 
 func (ass *adaptiveStrategyStore) newOperationSamplingStrategy(service, operation string, samplingRate float64) *sampling.OperationSamplingStrategy {
-	return &sampling.OperationSamplingStrategy{
+	qpsWeight := ass.qpsWeightCoefficient(service, operation)
+	ret := &sampling.OperationSamplingStrategy{
 		Operation: operation,
 		ProbabilisticSampling: &sampling.ProbabilisticSamplingStrategy{
-			SamplingRate: math.Max(math.Min(samplingRate*ass.qpsWeightCoefficient(service, operation)*ass.AmplificationFactor, ass.MaxSamplingProbability), ass.MinSamplingProbability),
+			SamplingRate: math.Max(math.Min(samplingRate*qpsWeight*ass.AmplificationFactor, ass.MaxSamplingProbability), ass.MinSamplingProbability),
 		},
 	}
+	return ret
 }

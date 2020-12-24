@@ -196,21 +196,12 @@ func (t *traceGraph) Size() int {
 	return t.nodes.Size()
 }
 
-func (t *traceGraph) Refresh(node ExecutionGraphNode) {
-	t.lock.Lock()
-	defer t.lock.Unlock()
-
-	if t.nodes.Has(node) {
-		t.timer.Timing(node, t.duration)
-	}
-}
-
 func (t *traceGraph) IsRoot(svc, op string) bool {
 	if node, err := t.nodes.Get(svc, op); err == nil {
 		t.lock.Lock()
 		defer t.lock.Unlock()
 		t.timer.Timing(node, t.duration)
-		return node.HasOut(t.fakeRoot)
+		return node.HasIn(t.fakeRoot)
 	} else {
 		return false
 	}
@@ -242,6 +233,10 @@ func (t *traceGraph) removeNode(node ExecutionGraphNode) {
 }
 
 func (t *traceGraph) searchRoots(node ExecutionGraphNode, roots []ExecutionGraphNode, hasSearched set.Set) []ExecutionGraphNode {
+	t.lock.RLock()
+	t.timer.Timing(node, t.duration)
+	t.lock.RUnlock()
+
 	if hasSearched.Has(node) {
 		t.logger.Error("cycled call found",
 			zap.String("current service", node.Service()),
