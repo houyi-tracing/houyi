@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
-
-import "github.com/jaegertracing/jaeger/model"
-
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
-
-type SpanFilter interface {
-	Filter(span *model.Span) bool
-}
+// gossip contains implementation of Gossip protocol based on SIR model.
+//
+// There are two components: GossipRegistry and Seed.
+//
+// GossipRegistry: Peer discovery and health check.
+//
+// Seed: Message mongering.
+package gossip

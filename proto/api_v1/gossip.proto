@@ -1,0 +1,77 @@
+// Copyright (c) 2021 The Houyi Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package gossip;
+
+option go_package = "github.com/houyi-tracing/houyi/idl/api_v1";
+
+import "houyi.proto";
+
+message EvaluatingTags {
+  repeated houyi.EvaluatingTag tags = 1;
+}
+
+message Message {
+  enum MessageType {
+    NEW_RELATION = 0;
+    EXPIRED_OPERATION = 1;
+    EVALUATING_TAGS = 2;
+  };
+  int64 msgId = 1;
+  MessageType msgType = 2;
+  oneof msg {
+    houyi.Operation operation = 3;
+    houyi.Relation relation = 4;
+    EvaluatingTags evaluateTags = 5;
+  };
+}
+
+message NullReply {}
+
+service Seed {
+  rpc Sync(Message) returns(NullReply) {};
+}
+
+message Peer {
+  string ip = 1;
+  int64 port = 2;
+}
+
+message RegisterRequest {
+  int64 port = 1;
+}
+
+message RegisterRely {
+  int64 nodeId = 1;
+  int64 interval = 2;
+  int64 randomPick = 3;
+  double probToR = 4;
+}
+
+message HeartbeatRequest {
+  int64 nodeId = 1;
+  int64 port = 2;
+}
+
+message HeartbeatReply {
+  int64 nodeId = 1;
+  repeated Peer peers = 3;
+}
+
+service Registry {
+  rpc Register(RegisterRequest) returns (RegisterRely) {};
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatReply) {};
+}

@@ -1,4 +1,6 @@
 // Copyright (c) 2021 The Houyi Authors.
+// Copyright (c) 2019 The Jaeger Authors.
+// Copyright (c) 2017 Uber Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +14,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package processor
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"github.com/jaegertracing/jaeger/model"
+	"io"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+type ProcessSpan func(span *model.Span)
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+type ProcessSpans func(spans []*model.Span)
+
+func ChainedProcessSpan(sps ...ProcessSpan) ProcessSpan {
+	return func(span *model.Span) {
+		for _, p := range sps {
+			p(span)
+		}
+	}
+}
+
+type SpanProcessor interface {
+	io.Closer
+	ProcessSpans(spans []*model.Span) error
 }

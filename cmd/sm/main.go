@@ -16,28 +16,24 @@ package main
 
 import (
 	"fmt"
-	"github.com/houyi-tracing/houyi/cmd/collector/app"
-	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
-	"github.com/houyi-tracing/houyi/cmd/collector/app/processor"
+	"github.com/houyi-tracing/houyi/cmd/sm/app"
 	"github.com/houyi-tracing/houyi/pkg/config"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/houyi-tracing/houyi/pkg/gossip/seed"
 	"github.com/houyi-tracing/houyi/pkg/gossip/server"
 	"github.com/houyi-tracing/houyi/pkg/routing"
 	"github.com/houyi-tracing/houyi/pkg/skeleton"
+	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
 	"github.com/houyi-tracing/houyi/ports"
-	"github.com/jaegertracing/jaeger/plugin/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/uber/jaeger-lib/metrics"
 	"go.uber.org/zap"
-	"log"
 	"os"
 )
 
 const (
-	serviceName = "houyi-collector"
+	serviceName = "strategy-manger"
 )
 
 func main() {
@@ -48,24 +44,23 @@ func main() {
 	if err := v.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", v.ConfigFileUsed())
 	}
-
 	svc := skeleton.NewService(serviceName, ports.AdminHttpPort)
 
-	storageFactory, err := storage.NewFactory(storage.FactoryConfigFromEnvAndCLI(os.Args, os.Stderr))
-	if err != nil {
-		log.Fatalf("Cannot initialize storage factory: %v", err)
-	}
-
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:   serviceName,
-		Short: "Collector for Houyi tracing",
-		Long:  `This is a collector to receive and process spans reported by agents`,
+		Short: "Strategy manager for Houyi tracing",
+		Long: `This is a server to store sampling strategies and process requests for 
+			pulling sampling strategies from agents.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := svc.Start(v); err != nil {
 				return err
 			}
 
 			logger := svc.Logger // for short
+
+			// Sampling Strategy Tree
+			sstOpts := new(sst.Flags).InitFromViper(v)
+			strategyStore := sst.NewSamplingStrategyTree(sstOpts.MaxChildNodes)
 
 			// Trace Graph
 			traceGraph := tg.NewTraceGraph(logger)
@@ -90,56 +85,26 @@ func main() {
 				return err
 			}
 
-			// Span Processor
-			spOpts := new(processor.Flags).InitFromViper(v)
-			sp := processor.NewSpanProcessor(logger,
-				processor.Options.NumWorkers(spOpts.NumWorkers),
-				processor.Options.GossipSeed(gossipSeed),
-				processor.Options.TraceGraph(traceGraph),
-				processor.Options.EvaluateSpan(eval.Evaluate),
-				processor.Options.StrategyManagerEndpoint(&routing.Endpoint{
-					Addr: spOpts.StrategyManagerAddr,
-					Port: spOpts.StrategyManagerPort,
-				}))
-
-			sf := filter.NewSpanFilter()
-
-			// reuse span writer of Jaeger
-			baseFactory := svc.MetricsFactory.Namespace(metrics.NSOptions{Name: "houyi"})
-			storageFactory.InitFromViper(v)
-			if err := storageFactory.Initialize(baseFactory, logger); err != nil {
-				logger.Fatal("Failed to init storage factory", zap.Error(err))
-			}
-			sw, err := storageFactory.CreateSpanWriter()
-			if err != nil {
-				logger.Fatal("Failed to create span writer", zap.Error(err))
-			}
-
-			// Collector
-			cOpts := new(app.Flags).InitFromViper(v)
-			c := app.NewCollector(&app.CollectorParams{
-				Logger:         logger,
-				TraceGraph:     traceGraph,
-				GossipSeed:     gossipSeed,
-				Evaluator:      eval,
-				SpanProcessor:  sp,
-				SpanFilter:     sf,
-				SpanWriter:     sw,
-				GrpcListenPort: cOpts.GrpcListenPort,
+			// Strategy Manager
+			smOpts := new(app.Flags).InitFromViper(v)
+			sm := app.NewStrategyManager(&app.StrategyManagerParams{
+				Logger:          logger,
+				GrpcListenPort:  smOpts.GrpcListenPort,
+				RefreshInterval: smOpts.RefreshInterval,
+				StrategyStore:   strategyStore,
+				TraceGraph:      traceGraph,
+				Evaluator:       eval,
+				GossipSeed:      gossipSeed,
 			})
-
-			if err := c.Start(); err != nil {
-				logger.Fatal("Failed to start collector", zap.Error(err))
+			if err := sm.Start(); err != nil {
+				return err
 			}
 
 			svc.RunAndThen(func() {
-				// Do some nothing before completing shutting down.
+				// Do something before completing shutting down.
 				// for example, closing I/O or DB connection, etc.
-				if err := c.Close(); err != nil {
-					logger.Fatal("Failed to close collector", zap.Error(err))
-				}
-				if err := gossipSeed.Stop(); err != nil {
-					logger.Fatal("Failed to stop gossip seed", zap.Error(err))
+				if err := sm.Stop(); err != nil {
+					logger.Error("Failed to stop strategy manager", zap.Error(err))
 				}
 			})
 			return nil
@@ -149,9 +114,9 @@ func main() {
 	config.AddFlags(
 		v,
 		rootCmd,
-		processor.AddFlags,
 		seed.AddFlags,
-		storageFactory.AddFlags,
+		sst.AddFlags,
+		app.AddFlags,
 		svc.AddFlags)
 
 	// rootCmd represents the base command when called without any subcommands

@@ -1,0 +1,55 @@
+// Copyright (c) 2021 The Houyi Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package houyi;
+
+option go_package = "github.com/houyi-tracing/houyi/idl/api_v1";
+
+message Operation {
+  string service = 1;
+  string operation = 2;
+};
+
+message Relation {
+  Operation from = 1;
+  Operation to = 2;
+}
+
+message EvaluatingTag {
+  enum ValueType {
+    INTEGER = 0;
+    FLOAT = 1;
+    BOOLEAN = 2;
+    STRING = 4;
+  };
+  enum OperationType {
+    EQUAL_TO = 0;
+    NOT_EQUAL_TO = 1;
+    GREATER_THAN = 2;
+    GREATER_THAN_OR_EQUAL_TO = 3;
+    LESS_THAN = 4;
+    LESS_THAN_OR_EQUAL_TO = 5;
+  };
+  string tagName = 1;
+  OperationType operationType = 2;
+  ValueType valueType = 3;
+  oneof value {
+    int64 integerVal = 4;
+    double floatVal = 5;
+    bool booleanVal = 6;
+    string stringVal = 7;
+  };
+}

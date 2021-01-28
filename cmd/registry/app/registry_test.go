@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package app
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"go.uber.org/zap"
+	"testing"
+	"time"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
-
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+func TestMockRegistry(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	r := NewRegistry(logger)
+	if err := r.Start(); err != nil {
+		logger.Error("failed to start heartbeat", zap.Error(err))
+	}
+	time.Sleep(time.Hour)
 }

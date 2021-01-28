@@ -12,13 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
-
-import "github.com/jaegertracing/jaeger/model"
-
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
-
-type SpanFilter interface {
-	Filter(span *model.Span) bool
-}
+// skeleton package contains a framework to develop micro service.
+package skeleton

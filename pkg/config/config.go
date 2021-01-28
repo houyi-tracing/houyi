@@ -1,4 +1,4 @@
-// Copyright (c) 2021 The Houyi Authors.
+// Copyright (c) 2020 The Houyi Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,19 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package config
 
 import (
-	"github.com/jaegertracing/jaeger/model"
+	"flag"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"strings"
 )
 
-type spanFilter struct{}
+func AddFlags(v *viper.Viper, command *cobra.Command, inits ...func(*flag.FlagSet)) (*viper.Viper, *cobra.Command) {
+	flagSet := new(flag.FlagSet)
+	for i := range inits {
+		inits[i](flagSet)
+	}
+	command.Flags().AddGoFlagSet(flagSet)
 
-func NewSpanFilter() SpanFilter {
-	return &spanFilter{}
+	configureViper(v)
+	_ = v.BindPFlags(command.Flags())
+	return v, command
 }
 
-func (s *spanFilter) Filter(_ *model.Span) bool {
-	// TODO implement span filter
-	return false
+func configureViper(v *viper.Viper) {
+	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
 }

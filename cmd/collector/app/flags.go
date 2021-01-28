@@ -12,13 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package app
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"flag"
+	"github.com/houyi-tracing/houyi/ports"
+	"github.com/spf13/viper"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+const (
+	grpcListenPort = "collector.grpc.port"
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+	DefaultGrpcListenPort = ports.CollectorGrpcListenPort
+)
+
+type Flags struct {
+	GrpcListenPort int
+}
+
+func AddFlags(flags *flag.FlagSet) {
+	flags.Int(grpcListenPort, DefaultGrpcListenPort, "Port to server gRPC of collector.")
+}
+
+func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
+	f.GrpcListenPort = v.GetInt(grpcListenPort)
+	return f
 }

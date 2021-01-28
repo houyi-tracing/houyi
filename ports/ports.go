@@ -12,13 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package ports
 
-import "github.com/jaegertracing/jaeger/model"
+const (
+	// Admin Server
+	AdminHttpPort = 22590 // port to serve HTTP for health checking
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+	// Gossip
+	RegistryGrpcListenPort = 22600 // port to serve gRPC for Gossip Registry
+	SeedGrpcListenPort     = 22650 // port to serve gRPC for Gossip Seed
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
-}
+	// Strategy Manager
+	StrategyManagerGrpcListenPort = 18760 // port to server gRPC for StrategyManager.
+
+	// Collector
+	CollectorGrpcListenPort = 14580
+
+	// Agent
+	AgentGrpcListenPort = 14680
+)

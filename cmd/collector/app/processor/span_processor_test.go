@@ -12,19 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package processor
 
 import (
 	"github.com/jaegertracing/jaeger/model"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"testing"
+	"time"
 )
 
-type spanFilter struct{}
+func Test(t *testing.T) {
+	spans := []*model.Span{
+		{
+			TraceID:       model.TraceID{},
+			SpanID:        0,
+			OperationName: "",
+			References:    nil,
+			Flags:         0,
+			StartTime:     time.Time{},
+			Duration:      0,
+			Tags:          nil,
+			Logs:          nil,
+			Process:       nil,
+			ProcessID:     "",
+			Warnings:      nil,
+		},
+	}
 
-func NewSpanFilter() SpanFilter {
-	return &spanFilter{}
-}
+	logger, _ := zap.NewDevelopment()
+	sp := NewSpanProcessor(logger)
 
-func (s *spanFilter) Filter(_ *model.Span) bool {
-	// TODO implement span filter
-	return false
+	err := sp.ProcessSpans(spans)
+	assert.Nil(t, err)
 }

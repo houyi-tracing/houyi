@@ -12,13 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+syntax = "proto3";
 
-import "github.com/jaegertracing/jaeger/model"
+package trace;
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+import "houyi.proto";
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+option go_package = "github.com/houyi-tracing/houyi/idl/api_v1";
+
+message TraceNode {
+  string name = 1;
+  repeated TraceNode children = 2;
+}
+
+message TracesReply {
+  repeated TraceNode entries = 1;
+}
+
+service TraceGraphManager {
+  rpc Traces(houyi.Operation) returns (TracesReply);
 }

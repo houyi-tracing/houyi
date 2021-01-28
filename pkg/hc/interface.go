@@ -12,13 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package hc
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"go.uber.org/zap"
+	"net/http"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
-
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+type HealthCheck interface {
+	Get() Status
+	Handler() http.Handler
+	Ready()
+	Set(status Status)
+	SetLogger(*zap.Logger)
 }

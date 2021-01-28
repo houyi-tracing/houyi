@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package routing
 
-import "github.com/jaegertracing/jaeger/model"
+import "fmt"
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+type Endpoint struct {
+	Addr string
+	Port int
+}
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+func (ep Endpoint) String() string {
+	return fmt.Sprintf("%s:%d", ep.Addr, ep.Port)
 }

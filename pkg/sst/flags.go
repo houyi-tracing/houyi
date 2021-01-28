@@ -12,13 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package sst
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"flag"
+	"github.com/spf13/viper"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+const (
+	maxChildNodes = "sst.max.child.nodes"
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+	DefaultMaxChildNodes = 10
+)
+
+type Flags struct {
+	MaxChildNodes int
+}
+
+func AddFlags(flags *flag.FlagSet) {
+	flags.Int(maxChildNodes, DefaultMaxChildNodes, "Maximum child nodes of sampling strategy tree.")
+}
+
+func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
+	f.MaxChildNodes = v.GetInt(maxChildNodes)
+	return f
 }

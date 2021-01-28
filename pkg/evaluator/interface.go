@@ -12,13 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package filter
+package evaluator
 
-import "github.com/jaegertracing/jaeger/model"
+import (
+	"github.com/houyi-tracing/houyi/idl/api_v1"
+	"github.com/jaegertracing/jaeger/model"
+)
 
-// FilterSpan decides whether reject to process a span.
-type FilterSpan func(span *model.Span) bool
+// EvaluateSpan decides whether to increase the sampling rate of operation relate to this span and
+// it is called after FilterSpan.
+type EvaluateSpan func(span *model.Span) bool
 
-type SpanFilter interface {
-	Filter(span *model.Span) bool
+type Evaluator interface {
+	// Evaluate returns true if span has tags that exist in evaluating tags, else false.
+	Evaluate(span *model.Span) bool
+
+	// Get returns evaluating tags
+	Get() *api_v1.EvaluatingTags
+
+	// Update updates evaluating tags
+	Update(tags *api_v1.EvaluatingTags)
 }
