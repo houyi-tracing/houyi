@@ -672,11 +672,11 @@ var file_gossip_proto_depIdxs = []int32{
 	1,  // 4: gossip.Message.evaluateTags:type_name -> gossip.EvaluatingTags
 	4,  // 5: gossip.HeartbeatReply.peers:type_name -> gossip.Peer
 	2,  // 6: gossip.Seed.Sync:input_type -> gossip.Message
-	5,  // 7: gossip.GossipRegistry.Register:input_type -> gossip.RegisterRequest
-	7,  // 8: gossip.GossipRegistry.Heartbeat:input_type -> gossip.HeartbeatRequest
+	5,  // 7: gossip.Registry.Register:input_type -> gossip.RegisterRequest
+	7,  // 8: gossip.Registry.Heartbeat:input_type -> gossip.HeartbeatRequest
 	3,  // 9: gossip.Seed.Sync:output_type -> gossip.NullReply
-	6,  // 10: gossip.GossipRegistry.Register:output_type -> gossip.RegisterRely
-	8,  // 11: gossip.GossipRegistry.Heartbeat:output_type -> gossip.HeartbeatReply
+	6,  // 10: gossip.Registry.Register:output_type -> gossip.RegisterRely
+	8,  // 11: gossip.Registry.Heartbeat:output_type -> gossip.HeartbeatReply
 	9,  // [9:12] is the sub-list for method output_type
 	6,  // [6:9] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name

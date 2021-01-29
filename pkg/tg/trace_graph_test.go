@@ -46,15 +46,15 @@ func TestAutomaticallyFindEntries(t *testing.T) {
 	assert.NotNil(t, tg.Add(op2))
 	assert.Nil(t, tg.Add(op3))
 	assert.NotNil(t, tg.Add(op3))
-	assert.False(t, tg.IsEntry(op1))
-	assert.False(t, tg.IsEntry(op2))
-	assert.False(t, tg.IsEntry(op3))
+	assert.False(t, tg.IsIngress(op1))
+	assert.False(t, tg.IsIngress(op2))
+	assert.False(t, tg.IsIngress(op3))
 
 	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
 		From: op1,
 		To:   op2,
 	}))
-	assert.True(t, tg.IsEntry(op1))
+	assert.True(t, tg.IsIngress(op1))
 
 	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
 		From: op2,
@@ -64,14 +64,14 @@ func TestAutomaticallyFindEntries(t *testing.T) {
 		From: op1,
 		To:   op2,
 	}))
-	assert.False(t, tg.IsEntry(op1))
-	assert.True(t, tg.IsEntry(op2))
+	assert.False(t, tg.IsIngress(op1))
+	assert.True(t, tg.IsIngress(op2))
 
 	assert.Nil(t, tg.RemoveRelation(&api_v1.Relation{
 		From: op2,
 		To:   op3,
 	}))
-	assert.False(t, tg.IsEntry(op2))
+	assert.False(t, tg.IsIngress(op2))
 }
 
 func TestMultipleEntries(t *testing.T) {
@@ -125,7 +125,7 @@ func TestMultipleEntries(t *testing.T) {
 		From: op4,
 		To:   op5,
 	}))
-	entries, err := tg.GetEntries(op5)
+	entries, err := tg.GetIngresses(op5)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(entries))
 }
@@ -190,7 +190,7 @@ func TestGenerateTraces(t *testing.T) {
 		To:   ops[6],
 	}))
 
-	entries, err := tg.GetEntries(ops[6])
+	entries, err := tg.GetIngresses(ops[6])
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(entries))
 	traces, err := tg.Traces(ops[5])

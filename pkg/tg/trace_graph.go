@@ -156,7 +156,7 @@ func (t *traceGraph) HasRelation(rel *api_v1.Relation) bool {
 	}
 }
 
-func (t *traceGraph) IsEntry(op *api_v1.Operation) bool {
+func (t *traceGraph) IsIngress(op *api_v1.Operation) bool {
 	t.RLock()
 	defer t.RUnlock()
 
@@ -168,7 +168,7 @@ func (t *traceGraph) IsEntry(op *api_v1.Operation) bool {
 	}
 }
 
-func (t *traceGraph) GetEntries(op *api_v1.Operation) ([]*api_v1.Operation, error) {
+func (t *traceGraph) GetIngresses(op *api_v1.Operation) ([]*api_v1.Operation, error) {
 	t.RLock()
 	defer t.RUnlock()
 

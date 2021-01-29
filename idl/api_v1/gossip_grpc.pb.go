@@ -96,7 +96,7 @@ var _Seed_serviceDesc = grpc.ServiceDesc{
 	Metadata: "gossip.proto",
 }
 
-// RegistryClient is the client API for GossipRegistry service.
+// RegistryClient is the client API for Registry service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RegistryClient interface {
@@ -114,7 +114,7 @@ func NewRegistryClient(cc grpc.ClientConnInterface) RegistryClient {
 
 func (c *registryClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterRely, error) {
 	out := new(RegisterRely)
-	err := c.cc.Invoke(ctx, "/gossip.GossipRegistry/Register", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gossip.Registry/Register", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +123,14 @@ func (c *registryClient) Register(ctx context.Context, in *RegisterRequest, opts
 
 func (c *registryClient) Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatReply, error) {
 	out := new(HeartbeatReply)
-	err := c.cc.Invoke(ctx, "/gossip.GossipRegistry/Heartbeat", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/gossip.Registry/Heartbeat", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// RegistryServer is the server API for GossipRegistry service.
+// RegistryServer is the server API for Registry service.
 // All implementations must embed UnimplementedRegistryServer
 // for forward compatibility
 type RegistryServer interface {
@@ -172,7 +172,7 @@ func _Registry_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gossip.GossipRegistry/Register",
+		FullMethod: "/gossip.Registry/Register",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).Register(ctx, req.(*RegisterRequest))
@@ -190,7 +190,7 @@ func _Registry_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gossip.GossipRegistry/Heartbeat",
+		FullMethod: "/gossip.Registry/Heartbeat",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServer).Heartbeat(ctx, req.(*HeartbeatRequest))
@@ -199,7 +199,7 @@ func _Registry_Heartbeat_Handler(srv interface{}, ctx context.Context, dec func(
 }
 
 var _Registry_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "gossip.GossipRegistry",
+	ServiceName: "gossip.Registry",
 	HandlerType: (*RegistryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

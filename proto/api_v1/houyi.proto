@@ -53,3 +53,7 @@ message EvaluatingTag {
     string stringVal = 7;
   };
 }
+
+message Span {
+
+}

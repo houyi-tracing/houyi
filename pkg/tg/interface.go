@@ -38,12 +38,12 @@ type TraceGraph interface {
 	// If one of operations of this relation does not exist, this function would return false.
 	HasRelation(rel *api_v1.Relation) bool
 
-	// IsEntry returns true if operation is an entry operation that received requests from users instead of other
+	// IsIngress returns true if operation is an ingress operation that received requests from users instead of other
 	// operations in this application system.
-	IsEntry(op *api_v1.Operation) bool
+	IsIngress(op *api_v1.Operation) bool
 
-	// GetEntries returns all entry operations relate to inputted operation.
-	GetEntries(op *api_v1.Operation) ([]*api_v1.Operation, error)
+	// GetIngresses returns all ingress operations relate to inputted operation.
+	GetIngresses(op *api_v1.Operation) ([]*api_v1.Operation, error)
 
 	// Traces returns static call relationships relate to inputted operation.
 	// Each element of returned slice is an entry operation.

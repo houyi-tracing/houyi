@@ -26,7 +26,7 @@ type OperationStore interface {
 	Start()
 	Stop()
 
-	UpToDate(op *api_v1.Operation, isEntry bool, qps float64)
+	UpToDate(op *api_v1.Operation, isIngress bool, qps float64)
 	QpsWeight(op *api_v1.Operation) float64
 }
 
@@ -68,7 +68,7 @@ func (t *opStore) Stop() {
 	wg.Wait()
 }
 
-func (t *opStore) UpToDate(op *api_v1.Operation, isEntry bool, qps float64) {
+func (t *opStore) UpToDate(op *api_v1.Operation, isIngress bool, qps float64) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -79,13 +79,13 @@ func (t *opStore) UpToDate(op *api_v1.Operation, isEntry bool, qps float64) {
 	if item, has := t.m[svcName][opName]; has {
 		item.upSince = time.Now()
 		item.qps = qps
-		item.isEntry = isEntry
+		item.isEntry = isIngress
 	} else {
 		t.m[svcName][opName] = &tItem{
 			upSince: time.Now(),
 			op:      op,
 			qps:     qps,
-			isEntry: isEntry,
+			isEntry: isIngress,
 		}
 	}
 }
