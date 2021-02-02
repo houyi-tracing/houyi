@@ -65,7 +65,13 @@ func (t *traceGraph) Add(op *api_v1.Operation) error {
 	defer t.Unlock()
 
 	if !t.has(op) {
-		t.nodes.Add(op.GetService(), op.GetOperation(), newNode(op))
+		n := newNode(op)
+		t.nodes.Add(op.GetService(), op.GetOperation(), n)
+
+		// mark a new operation as an ingress operation because there are not other operations calling it.
+		addRelation(t.globalRoot, n)
+		t.logger.Debug("added operation",
+			zap.String("service", op.Service), zap.String("operation", op.Operation))
 		return nil
 	} else {
 		return fmt.Errorf(OperationAlreadyExistErr)
@@ -78,6 +84,7 @@ func (t *traceGraph) Remove(op *api_v1.Operation) error {
 
 	if t.has(op) {
 		rmNode := t.get(op)
+
 		// remove all relations related to this node for garbage collection
 		for _, in := range rmNode.in.All() {
 			in.RemoveOut(rmNode)
@@ -85,7 +92,10 @@ func (t *traceGraph) Remove(op *api_v1.Operation) error {
 		for _, out := range rmNode.out.All() {
 			out.RemoveIn(rmNode)
 		}
-		t.nodes.Remove(op.GetService(), op.GetOperation())
+
+		t.nodes.Remove(op.Service, op.Operation)
+		t.logger.Debug("removed operation",
+			zap.String("service", op.Service), zap.String("operation", op.Operation))
 		return nil
 	} else {
 		return fmt.Errorf(OperationDoesNotExistErr)
@@ -108,13 +118,11 @@ func (t *traceGraph) AddRelation(rel *api_v1.Relation) error {
 		fromNode, toNode := t.get(from), t.get(to)
 		addRelation(fromNode, toNode)
 
-		if fromNode.InCnt() == 0 {
-			// mark operation of fromNode as an entry operation.
-			addRelation(t.globalRoot, fromNode)
-		}
 		if toNode.HasIn(t.globalRoot) {
 			removeRelation(t.globalRoot, toNode)
 		}
+
+		t.logger.Debug("added relation", zap.String("relation", rel.String()))
 		return nil
 	} else {
 		return fmt.Errorf(OperationDoesNotExistErr)
@@ -131,12 +139,11 @@ func (t *traceGraph) RemoveRelation(rel *api_v1.Relation) error {
 		fromNode, toNode := t.get(from), t.get(to)
 		removeRelation(fromNode, toNode)
 
-		if fromNode.HasIn(t.globalRoot) && fromNode.OutCnt() == 0 {
-			removeRelation(t.globalRoot, fromNode)
-		}
 		if toNode.InCnt() == 0 && toNode.OutCnt() != 0 {
 			addRelation(t.globalRoot, toNode)
 		}
+
+		t.logger.Debug("removed relation", zap.String("relation", rel.String()))
 		return nil
 	} else {
 		return fmt.Errorf(OperationDoesNotExistErr)
@@ -162,7 +169,7 @@ func (t *traceGraph) IsIngress(op *api_v1.Operation) bool {
 
 	if t.has(op) {
 		n := t.get(op)
-		return t.globalRoot.HasOut(n) && n.HasIn(t.globalRoot)
+		return n.HasIn(t.globalRoot) && t.globalRoot.HasOut(n)
 	} else {
 		return false
 	}
@@ -174,7 +181,7 @@ func (t *traceGraph) GetIngresses(op *api_v1.Operation) ([]*api_v1.Operation, er
 
 	if t.has(op) {
 		entries := make([]*api_v1.Operation, 0)
-		entries = t.searchEntries(t.get(op), entries, set.NewSet())
+		entries = t.searchIngresses(t.get(op), entries, set.NewSet())
 		return entries, nil
 	} else {
 		return nil, fmt.Errorf(OperationDoesNotExistErr)
@@ -188,9 +195,9 @@ func (t *traceGraph) Traces(op *api_v1.Operation) ([]*api_v1.TraceNode, error) {
 	if t.has(op) {
 		traces := make([]*api_v1.TraceNode, 0)
 
-		entries := make([]*api_v1.Operation, 0)
-		entries = t.searchEntries(t.get(op), entries, set.NewSet())
-		for _, e := range entries {
+		ingresses := make([]*api_v1.Operation, 0)
+		ingresses = t.searchIngresses(t.get(op), ingresses, set.NewSet())
+		for _, e := range ingresses {
 			traces = append(traces, generateTrace(t.get(e)))
 		}
 
@@ -215,7 +222,7 @@ func (t *traceGraph) get(op *api_v1.Operation) *node {
 	return t.nodes.Get(op.GetService(), op.GetOperation())
 }
 
-func (t *traceGraph) searchEntries(n *node, result []*api_v1.Operation, hasSearched set.Set) []*api_v1.Operation {
+func (t *traceGraph) searchIngresses(n *node, result []*api_v1.Operation, hasSearched set.Set) []*api_v1.Operation {
 	if hasSearched.Has(n) {
 		splitStr := make([]string, len(result))
 		for i, rn := range result {
@@ -231,7 +238,7 @@ func (t *traceGraph) searchEntries(n *node, result []*api_v1.Operation, hasSearc
 		result = append(result, n.operation)
 	} else {
 		for _, next := range n.in.All() {
-			result = t.searchEntries(next, result, hasSearched)
+			result = t.searchIngresses(next, result, hasSearched)
 		}
 	}
 	return result
