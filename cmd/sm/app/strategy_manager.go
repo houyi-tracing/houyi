@@ -75,6 +75,7 @@ func (m *StrategyManager) Start() error {
 		TraceGraph:     m.tg,
 		OperationStore: m.opStore,
 		Evaluator:      m.eval,
+		GossipSeed:     m.seed,
 	}); err != nil {
 		return err
 	} else {

@@ -26,7 +26,7 @@ const (
 	refreshInterval = "refresh.interval"
 
 	DefaultGrpcListenPort  = ports.StrategyManagerGrpcListenPort
-	DefaultRefreshInterval = time.Second * 10
+	DefaultRefreshInterval = time.Minute
 )
 
 type Flags struct {

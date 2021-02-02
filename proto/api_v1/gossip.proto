@@ -27,8 +27,9 @@ message EvaluatingTags {
 message Message {
   enum MessageType {
     NEW_RELATION = 0;
-    EXPIRED_OPERATION = 1;
-    EVALUATING_TAGS = 2;
+    NEW_OPERATION = 1;
+    EXPIRED_OPERATION = 2;
+    EVALUATING_TAGS = 3;
   };
   int64 msgId = 1;
   MessageType msgType = 2;

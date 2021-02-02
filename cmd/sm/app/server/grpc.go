@@ -20,6 +20,7 @@ import (
 	"github.com/houyi-tracing/houyi/cmd/sm/app/store"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
+	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
 	"go.uber.org/zap"
@@ -34,6 +35,7 @@ type GrpcServerParams struct {
 	TraceGraph     tg.TraceGraph
 	OperationStore store.OperationStore
 	Evaluator      evaluator.Evaluator
+	GossipSeed     gossip.Seed
 }
 
 func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
@@ -60,6 +62,7 @@ func serveGrpc(s *grpc.Server, lis net.Listener, params *GrpcServerParams) error
 		params.TraceGraph,
 		params.OperationStore,
 		params.Evaluator,
+		params.GossipSeed,
 	)
 
 	api_v1.RegisterDynamicStrategyManagerServer(s, grpcHandler)

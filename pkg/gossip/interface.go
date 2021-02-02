@@ -44,6 +44,10 @@ type Seed interface {
 	// and process it.
 	OnNewRelation(func(rel *api_v1.Relation))
 
+	// OnNewOperation sets function that would be invoked when gossip seed received a message carrying new operation
+	// and process it.
+	OnNewOperation(func(op *api_v1.Operation))
+
 	// OnExpiredOperation sets function that would be invoked when gossip seed received a message carrying expired
 	// operation and process it.
 	OnExpiredOperation(func(op *api_v1.Operation))
@@ -54,6 +58,9 @@ type Seed interface {
 
 	// MongerNewRelation activates message mongering to synchronize new relations between gossip seeds.
 	MongerNewRelation(rel *api_v1.Relation)
+
+	// MongerNewOperation activates message mongering to synchronize new operations between gossip seeds.
+	MongerNewOperation(op *api_v1.Operation)
 
 	// MongerExpiredOperation activates message mongering to synchronize expired operations between gossip seeds.
 	MongerExpiredOperation(op *api_v1.Operation)

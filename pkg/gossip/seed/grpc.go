@@ -70,6 +70,8 @@ func (g *grpcHandler) Sync(_ context.Context, msg *api_v1.Message) (*api_v1.Null
 		switch msg.GetMsgType() {
 		case api_v1.Message_NEW_RELATION:
 			defer s.onNewRelation(msg.GetRelation())
+		case api_v1.Message_NEW_OPERATION:
+			defer s.onNewOperation(msg.GetOperation())
 		case api_v1.Message_EXPIRED_OPERATION:
 			defer s.onExpiredOperation(msg.GetOperation())
 		case api_v1.Message_EVALUATING_TAGS:

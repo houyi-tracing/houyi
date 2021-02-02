@@ -20,6 +20,7 @@ import (
 	opStore "github.com/houyi-tracing/houyi/cmd/sm/app/store"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
+	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
 	"go.uber.org/zap"
@@ -36,19 +37,22 @@ type GrpcHandler struct {
 	tg     tg.TraceGraph
 	store  opStore.OperationStore
 	eval   evaluator.Evaluator
+	seed   gossip.Seed
 }
 
 func NewGrpcHandler(logger *zap.Logger,
 	sst sst.SamplingStrategyTree,
 	tg tg.TraceGraph,
 	store opStore.OperationStore,
-	eval evaluator.Evaluator) *GrpcHandler {
+	eval evaluator.Evaluator,
+	seed gossip.Seed) *GrpcHandler {
 	return &GrpcHandler{
 		logger: logger,
 		sst:    sst,
 		tg:     tg,
 		store:  store,
 		eval:   eval,
+		seed:   seed,
 	}
 }
 
@@ -107,6 +111,10 @@ func (h *GrpcHandler) dynamicStrategy(request *api_v1.StrategyRequest) (*api_v1.
 			Service:   serviceName,
 			Operation: op.GetName(),
 		}
+		if !h.tg.Has(operation) {
+			_ = h.tg.Add(operation)
+			h.seed.MongerNewOperation(operation)
+		}
 		if h.tg.IsIngress(operation) {
 			h.store.UpToDate(operation, true, op.Qps)
 			if strategy, err := h.sst.Generate(operation); err == nil && strategy != nil {
@@ -141,6 +149,10 @@ func (h *GrpcHandler) adaptiveStrategy(request *api_v1.StrategyRequest) (*api_v1
 		operation := &api_v1.Operation{
 			Service:   serviceName,
 			Operation: op.GetName(),
+		}
+		if !h.tg.Has(operation) {
+			_ = h.tg.Add(operation)
+			h.seed.MongerNewOperation(operation)
 		}
 		if h.tg.IsIngress(operation) {
 			h.store.UpToDate(operation, true, op.Qps)

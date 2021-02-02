@@ -47,7 +47,8 @@ func CreateAndStartSeed(params *SeedParams) (gossip.Seed, error) {
 
 	gHandler := handler.NewHandler(params.Logger, params.TraceGraph, params.Evaluator)
 
-	s.OnExpiredOperation(gHandler.OperationHandler)
+	s.OnNewOperation(gHandler.NewOperationHandler)
+	s.OnExpiredOperation(gHandler.ExpiredOperationHandler)
 	s.OnEvaluatingTags(gHandler.TagsHandler)
 	s.OnNewRelation(gHandler.RelationHandler)
 

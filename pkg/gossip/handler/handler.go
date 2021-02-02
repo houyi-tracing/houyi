@@ -54,12 +54,22 @@ func (h *Handler) RelationHandler(rel *api_v1.Relation) {
 	}
 }
 
-func (h *Handler) OperationHandler(op *api_v1.Operation) {
+func (h *Handler) ExpiredOperationHandler(op *api_v1.Operation) {
 	h.logger.Debug("Handle expired operation", zap.String("operation", op.String()))
 
 	if h.tg.Has(op) {
 		if err := h.tg.Remove(op); err != nil {
 			h.logger.Error("failed to remove expired operation for trace graph", zap.Error(err))
+		}
+	}
+}
+
+func (h *Handler) NewOperationHandler(op *api_v1.Operation) {
+	h.logger.Debug("Handle new operation", zap.String("operation", op.String()))
+
+	if !h.tg.Has(op) {
+		if err := h.tg.Add(op); err != nil {
+			h.logger.Error("failed to add new operation for trace graph", zap.Error(err))
 		}
 	}
 }

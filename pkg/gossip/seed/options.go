@@ -24,6 +24,7 @@ type options struct {
 	listenPort         int
 	registryEndpoint   *routing.Endpoint
 	onNewRelation      func(rel *api_v1.Relation)
+	onNewOperation     func(op *api_v1.Operation)
 	onExpiredOperation func(op *api_v1.Operation)
 	onEvaluatingTags   func(tags *api_v1.EvaluatingTags)
 }
@@ -53,6 +54,12 @@ func (options) RegistryEndpoint(ep *routing.Endpoint) Option {
 func (options) OnNewRelation(f func(rel *api_v1.Relation)) Option {
 	return func(opts *options) {
 		opts.onNewRelation = f
+	}
+}
+
+func (options) OnNewOperation(f func(op *api_v1.Operation)) Option {
+	return func(opts *options) {
+		opts.onNewOperation = f
 	}
 }
 
@@ -95,6 +102,11 @@ func (o options) apply(opts ...Option) options {
 	}
 	if ret.onEvaluatingTags == nil {
 		ret.onEvaluatingTags = func(tags *api_v1.EvaluatingTags) {
+			// do nothing
+		}
+	}
+	if ret.onNewOperation == nil {
+		ret.onNewOperation = func(op *api_v1.Operation) {
 			// do nothing
 		}
 	}

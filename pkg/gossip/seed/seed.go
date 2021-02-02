@@ -103,6 +103,13 @@ func (s *seed) OnEvaluatingTags(f func(tags *api_v1.EvaluatingTags)) {
 	s.onEvaluatingTags = f
 }
 
+func (s *seed) OnNewOperation(f func(op *api_v1.Operation)) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.onNewOperation = f
+}
+
 func (s *seed) MongerEvaluatingTags(tags *api_v1.EvaluatingTags) {
 	msg := &api_v1.Message{
 		MsgId:   s.msgIdGenerator.Generate().Int64(),
@@ -143,6 +150,23 @@ func (s *seed) MongerNewRelation(rel *api_v1.Relation) {
 		MsgType: api_v1.Message_NEW_RELATION,
 		Msg: &api_v1.Message_Relation{
 			Relation: rel,
+		},
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if s.grpcHandler != nil {
+		_, _ = s.grpcHandler.Sync(ctx, msg)
+	} else {
+		s.logger.Error("Grpc handler does not ready")
+	}
+}
+
+func (s *seed) MongerNewOperation(op *api_v1.Operation) {
+	msg := &api_v1.Message{
+		MsgId:   s.msgIdGenerator.Generate().Int64(),
+		MsgType: api_v1.Message_NEW_OPERATION,
+		Msg: &api_v1.Message_Operation{
+			Operation: op,
 		},
 	}
 	ctx, cancel := context.WithCancel(context.Background())
