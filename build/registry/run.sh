@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_CMD='./sm'
+ROOT_CMD='./registry'
 
 if [[ ${LOG_LEVEL} ]]; then
   ROOT_CMD="${ROOT_CMD} --log-level=${LOG_LEVEL}"

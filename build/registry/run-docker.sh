@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_CMD='docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-strategy-manager'
+ROOT_CMD='docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-registry'
 
 if [[ ${LOG_LEVEL} ]]; then
   ROOT_CMD="${ROOT_CMD} --env LOG_LEVEL=${LOG_LEVEL}"
@@ -15,7 +15,7 @@ if [[ ${SCALE_FACTOR} ]]; then
   ROOT_CMD="${ROOT_CMD} --env SCALE_FACTOR=${SCALE_FACTOR}"
 fi
 
-ROOT_CMD="${ROOT_CMD} houyitracing/strategy-manager"
+ROOT_CMD="${ROOT_CMD} houyitracing/registry"
 
 echo $ROOT_CMD
 eval $ROOT_CMD

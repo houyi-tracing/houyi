@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t houyitracing/strategy-manager .
+docker build -t houyitracing/registry .
