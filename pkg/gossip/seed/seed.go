@@ -263,8 +263,9 @@ func (s *seed) msgMonger() {
 }
 
 func (s *seed) register() {
-	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
-	for conn == nil || err != nil {
+	var conn *grpc.ClientConn
+	var err error
+	for conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil; {
 		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
 		time.Sleep(time.Second * 5)
 		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
@@ -279,28 +280,30 @@ func (s *seed) register() {
 		Port: int64(s.listenPort),
 	}
 
-	if reply, err := c.Register(ctx, req); err != nil {
-		s.logger.Error("Failed to heartbeat", zap.Error(err))
-	} else {
-		s.nodeId = int(reply.NodeId)
-		s.randomPick = int(reply.RandomPick)
-		s.heartbeatInterval = time.Duration(reply.Interval)
-		s.probToR = reply.ProbToR
-
-		s.logger.Info("Received reply from registry",
-			zap.Int("node id", s.nodeId),
-			zap.Int("random pick", s.randomPick),
-			zap.Float64("probability to R", s.probToR),
-			zap.Duration("heartbeat interval", s.heartbeatInterval))
+	reply := &api_v1.RegisterRely{}
+	for reply, err = c.Register(ctx, req); err != nil; {
+		s.logger.Error("Failed to heartbeat. Retry 5 seconds later", zap.Error(err))
+		time.Sleep(time.Second * 5)
 	}
+	s.nodeId = int(reply.NodeId)
+	s.randomPick = int(reply.RandomPick)
+	s.heartbeatInterval = time.Duration(reply.Interval)
+	s.probToR = reply.ProbToR
+
+	s.logger.Info("Received reply from registry",
+		zap.Int("node id", s.nodeId),
+		zap.Int("random pick", s.randomPick),
+		zap.Float64("probability to R", s.probToR),
+		zap.Duration("heartbeat interval", s.heartbeatInterval))
 }
 
 func (s *seed) heartbeat() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
-	for conn == nil || err != nil {
+	var conn *grpc.ClientConn
+	var err error
+	for conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil; {
 		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
 		time.Sleep(time.Second * 5)
 		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
@@ -316,18 +319,19 @@ func (s *seed) heartbeat() {
 		Port:   int64(s.listenPort),
 	}
 
-	if reply, err := c.Heartbeat(ctx, req); err != nil {
-		s.logger.Error("Failed to send heartbeat to registry", zap.Error(err))
-	} else {
-		s.logger.Debug("Received heartbeat reply from registry",
-			zap.Int64("node id", reply.NodeId),
-			zap.Int("peers", len(reply.Peers)))
-		s.peers = reply.Peers
-		if s.nodeId != int(reply.NodeId) {
-			s.logger.Debug("Received new node id from registry", zap.Int64("node id", reply.NodeId))
-		}
-		s.nodeId = int(reply.NodeId)
+	reply := &api_v1.HeartbeatReply{}
+	for reply, err = c.Heartbeat(ctx, req); err != nil; {
+		s.logger.Error("Failed to send heartbeat to registry. Retry 5 seconds later.", zap.Error(err))
+		time.Sleep(time.Second * 5)
 	}
+	s.logger.Debug("Received heartbeat reply from registry",
+		zap.Int64("node id", reply.NodeId),
+		zap.Int("peers", len(reply.Peers)))
+	s.peers = reply.Peers
+	if s.nodeId != int(reply.NodeId) {
+		s.logger.Debug("Received new node id from registry", zap.Int64("node id", reply.NodeId))
+	}
+	s.nodeId = int(reply.NodeId)
 }
 
 // randomlyPick randomly picks n gossip peers
