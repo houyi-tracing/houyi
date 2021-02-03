@@ -23,6 +23,7 @@ import (
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
 
@@ -32,12 +33,13 @@ type GrpcHandler struct {
 	api_v1.UnimplementedTraceGraphManagerServer
 	api_v1.UnimplementedEvaluatorManagerServer
 
-	logger *zap.Logger
-	sst    sst.SamplingStrategyTree
-	tg     tg.TraceGraph
-	store  opStore.OperationStore
-	eval   evaluator.Evaluator
-	seed   gossip.Seed
+	logger      *zap.Logger
+	scaleFactor *atomic.Float64
+	sst         sst.SamplingStrategyTree
+	tg          tg.TraceGraph
+	store       opStore.OperationStore
+	eval        evaluator.Evaluator
+	seed        gossip.Seed
 }
 
 func NewGrpcHandler(logger *zap.Logger,
@@ -45,14 +47,16 @@ func NewGrpcHandler(logger *zap.Logger,
 	tg tg.TraceGraph,
 	store opStore.OperationStore,
 	eval evaluator.Evaluator,
-	seed gossip.Seed) *GrpcHandler {
+	seed gossip.Seed,
+	scaleFactor *atomic.Float64) *GrpcHandler {
 	return &GrpcHandler{
-		logger: logger,
-		sst:    sst,
-		tg:     tg,
-		store:  store,
-		eval:   eval,
-		seed:   seed,
+		logger:      logger,
+		sst:         sst,
+		tg:          tg,
+		store:       store,
+		eval:        eval,
+		seed:        seed,
+		scaleFactor: scaleFactor,
 	}
 }
 
@@ -160,7 +164,7 @@ func (h *GrpcHandler) adaptiveStrategy(request *api_v1.StrategyRequest) (*api_v1
 				h.toAdaptiveStrategyResp(operation, h.store.QpsWeight(operation)))
 		} else {
 			h.store.UpToDate(operation, false, op.Qps)
-			// Give operations that is not an ingress with sampling rate 1.0 so that when it become entry, tracing
+			// Give operations that is not an ingress with sampling rate 1.0 so that when it become ingress, tracing
 			// system would quickly collect enough traces to know that (this operation has become ingress).
 			strategies = append(strategies, h.toAdaptiveStrategyResp(operation, 1.0))
 		}

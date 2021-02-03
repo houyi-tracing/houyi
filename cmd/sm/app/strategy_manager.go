@@ -21,6 +21,7 @@ import (
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"sync"
@@ -30,6 +31,7 @@ import (
 type StrategyManagerParams struct {
 	Logger          *zap.Logger
 	GrpcListenPort  int
+	ScaleFactor     *atomic.Float64
 	RefreshInterval time.Duration
 	StrategyStore   sst.SamplingStrategyTree
 	TraceGraph      tg.TraceGraph
@@ -39,6 +41,8 @@ type StrategyManagerParams struct {
 
 type StrategyManager struct {
 	sync.RWMutex
+
+	scaleFactor *atomic.Float64
 
 	grpcListenPort  int
 	refreshInterval time.Duration
@@ -62,6 +66,7 @@ func NewStrategyManager(params *StrategyManagerParams) *StrategyManager {
 		tg:              params.TraceGraph,
 		eval:            params.Evaluator,
 		seed:            params.GossipSeed,
+		scaleFactor:     params.ScaleFactor,
 	}
 	ret.opStore = store.NewOperationStore(params.Logger, ret.refreshInterval, ret.seed)
 	return ret
@@ -76,6 +81,7 @@ func (m *StrategyManager) Start() error {
 		OperationStore: m.opStore,
 		Evaluator:      m.eval,
 		GossipSeed:     m.seed,
+		ScaleFactor:    m.scaleFactor,
 	}); err != nil {
 		return err
 	} else {

@@ -23,6 +23,7 @@ import (
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/sst"
 	"github.com/houyi-tracing/houyi/pkg/tg"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"net"
@@ -31,6 +32,7 @@ import (
 type GrpcServerParams struct {
 	Logger         *zap.Logger
 	ListenPort     int
+	ScaleFactor    *atomic.Float64
 	StrategyStore  sst.SamplingStrategyTree
 	TraceGraph     tg.TraceGraph
 	OperationStore store.OperationStore
@@ -63,6 +65,7 @@ func serveGrpc(s *grpc.Server, lis net.Listener, params *GrpcServerParams) error
 		params.OperationStore,
 		params.Evaluator,
 		params.GossipSeed,
+		params.ScaleFactor,
 	)
 
 	api_v1.RegisterDynamicStrategyManagerServer(s, grpcHandler)

@@ -24,23 +24,33 @@ import (
 const (
 	grpcListenPort  = "grpc.listen.port"
 	refreshInterval = "refresh.interval"
+	scaleFactor     = "scale.factor"
 
 	DefaultGrpcListenPort  = ports.StrategyManagerGrpcListenPort
 	DefaultRefreshInterval = time.Minute
+	DefaultScaleFactor     = 1.0
 )
 
 type Flags struct {
 	GrpcListenPort  int
 	RefreshInterval time.Duration
+	ScaleFactor     float64
 }
 
 func AddFlags(flags *flag.FlagSet) {
-	flags.Int(grpcListenPort, DefaultGrpcListenPort, "Port to server gRPC of strategy manager.")
-	flags.Duration(refreshInterval, DefaultRefreshInterval, "Interval for removing expired operations.")
+	flags.Int(grpcListenPort, DefaultGrpcListenPort,
+		"Port to server gRPC of strategy manager.")
+
+	flags.Duration(refreshInterval, DefaultRefreshInterval,
+		"Interval for removing expired operations.")
+
+	flags.Float64(scaleFactor, DefaultScaleFactor,
+		"Factor used to multiply sampling rates returned to all agents.")
 }
 
 func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
 	f.GrpcListenPort = v.GetInt(grpcListenPort)
 	f.RefreshInterval = v.GetDuration(refreshInterval)
+	f.ScaleFactor = v.GetFloat64(scaleFactor)
 	return f
 }

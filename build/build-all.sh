@@ -14,6 +14,7 @@ fi
 echo "OS=${OS}"
 echo "ARCH=${ARCH}"
 
-
-./build-agent.sh ${OS} ${ARCH}
-./build-collector.sh ${OS} ${ARCH}
+./agent/build.sh ${OS} ${ARCH}
+./registry/build.sh ${OS} ${ARCH}
+./sm/build.sh ${OS} ${ARCH}
+./collector/build.sh ${OS} ${ARCH}

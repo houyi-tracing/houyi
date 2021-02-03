@@ -28,6 +28,7 @@ import (
 	"github.com/houyi-tracing/houyi/ports"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"os"
 )
@@ -95,6 +96,7 @@ func main() {
 				TraceGraph:      traceGraph,
 				Evaluator:       eval,
 				GossipSeed:      gossipSeed,
+				ScaleFactor:     atomic.NewFloat64(smOpts.ScaleFactor),
 			})
 			if err := sm.Start(); err != nil {
 				return err

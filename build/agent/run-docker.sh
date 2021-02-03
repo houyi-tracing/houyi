@@ -1,0 +1,24 @@
+#!/bin/sh
+
+ROOT_CMD="docker run -d -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --name houyi-agent"
+
+if [[ ${COLLECTOR_ADDR} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env COLLECTOR_ADDR=${COLLECTOR_ADDR}"
+fi
+if [[ ${COLLECTOR_PORT} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env COLLECTOR_PORT=${COLLECTOR_PORT}"
+fi
+if [[ ${STRATEGY_MANAGER_ADDR} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env STRATEGY_MANAGER_ADDR=${STRATEGY_MANAGER_ADDR}"
+fi
+if [[ ${STRATEGY_MANAGER_PORT} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env STRATEGY_MANAGER_PORT=${STRATEGY_MANAGER_PORT}"
+fi
+if [[ ${GRPC_LISTEN_PORT} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env GRPC_LISTEN_PORT=${GRPC_LISTEN_PORT}"
+fi
+
+ROOT_CMD="$ROOT_CMD houyitracing/agent"
+
+echo $ROOT_CMD
+eval $ROOT_CMD
