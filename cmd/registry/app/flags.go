@@ -23,7 +23,7 @@ import (
 
 const (
 	randomPick      = "random.pick"
-	probToR         = "prob.to.R"
+	probToR         = "prob.to.r"
 	refreshInterval = "refresh.interval"
 	listenPort      = "listen.port"
 )
