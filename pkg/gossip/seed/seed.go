@@ -263,12 +263,13 @@ func (s *seed) msgMonger() {
 }
 
 func (s *seed) register() {
-	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure(), grpc.WithBlock())
-	if conn == nil || err != nil {
-		s.logger.Fatal("Could not dial to heartbeat", zap.String("address", s.registryEndpoint.String()))
-	} else {
-		defer conn.Close()
+	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
+	for conn == nil || err != nil {
+		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
+		time.Sleep(time.Second * 5)
+		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
 	}
+	defer conn.Close()
 
 	c := api_v1.NewRegistryClient(conn)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -298,12 +299,13 @@ func (s *seed) heartbeat() {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure(), grpc.WithBlock())
-	if conn == nil || err != nil {
-		s.logger.Fatal("Could not dial to heartbeat", zap.String("address", s.registryEndpoint.String()))
-	} else {
-		defer conn.Close()
+	conn, err := grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
+	for conn == nil || err != nil {
+		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
+		time.Sleep(time.Second * 5)
+		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
 	}
+	defer conn.Close()
 
 	c := api_v1.NewRegistryClient(conn)
 	ctx, cancel := context.WithCancel(context.Background())
