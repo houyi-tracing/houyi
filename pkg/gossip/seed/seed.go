@@ -67,18 +67,6 @@ func NewSeed(logger *zap.Logger, opts ...Option) gossip.Seed {
 		stopTimer:     make(chan *sync.WaitGroup),
 	}
 	s.msgSender = make(chan *api_v1.Message, s.lruSize/4)
-
-	// get global item id from registry
-	s.register()
-
-	// send heartbeat message to registry to get peers from registry
-	s.heartbeat()
-
-	if idGenerator, err := snowflake.NewNode(int64(s.nodeId)); err != nil {
-		logger.Error("Failed to new snowflake msgIdGenerator", zap.Error(err))
-	} else {
-		s.msgIdGenerator = idGenerator
-	}
 	return s
 }
 
@@ -179,19 +167,37 @@ func (s *seed) MongerNewOperation(op *api_v1.Operation) {
 }
 
 func (s *seed) Start() error {
+	// get global item id from registry
+	if err := s.register(); err != nil {
+		return err
+	}
+
+	// send heartbeat message to registry to get peers from registry
+	if err := s.heartbeat(); err != nil {
+		return err
+	}
+
+	if idGenerator, err := snowflake.NewNode(int64(s.nodeId)); err != nil {
+		return err
+	} else {
+		s.msgIdGenerator = idGenerator
+	}
+
 	go s.startGrpcServer()
 	go s.msgMonger()
 	go s.timer(s.heartbeat, s.heartbeatInterval)
 	return nil
 }
 
-func (s *seed) timer(f func(), interval time.Duration) {
+func (s *seed) timer(f func() error, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
-			f()
+			if err := f(); err != nil {
+				s.logger.Error("Failed to run function in ticker", zap.Error(err))
+			}
 		case wg := <-s.stopTimer:
 			wg.Done()
 			return
@@ -262,13 +268,11 @@ func (s *seed) msgMonger() {
 	}
 }
 
-func (s *seed) register() {
+func (s *seed) register() error {
 	var conn *grpc.ClientConn
 	var err error
-	for conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil; {
-		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
-		time.Sleep(time.Second * 5)
-		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
+	if conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil {
+		return err
 	}
 	defer conn.Close()
 
@@ -281,32 +285,31 @@ func (s *seed) register() {
 	}
 
 	reply := &api_v1.RegisterRely{}
-	for reply, err = c.Register(ctx, req); err != nil; {
-		s.logger.Error("Failed to heartbeat. Retry 5 seconds later", zap.Error(err))
-		time.Sleep(time.Second * 5)
-	}
-	s.nodeId = int(reply.NodeId)
-	s.randomPick = int(reply.RandomPick)
-	s.heartbeatInterval = time.Duration(reply.Interval)
-	s.probToR = reply.ProbToR
+	if reply, err = c.Register(ctx, req); err != nil {
+		return nil
+	} else {
+		s.nodeId = int(reply.NodeId)
+		s.randomPick = int(reply.RandomPick)
+		s.heartbeatInterval = time.Duration(reply.Interval)
+		s.probToR = reply.ProbToR
 
-	s.logger.Info("Received reply from registry",
-		zap.Int("node id", s.nodeId),
-		zap.Int("random pick", s.randomPick),
-		zap.Float64("probability to R", s.probToR),
-		zap.Duration("heartbeat interval", s.heartbeatInterval))
+		s.logger.Info("Received reply from registry",
+			zap.Int("node id", s.nodeId),
+			zap.Int("random pick", s.randomPick),
+			zap.Float64("probability to R", s.probToR),
+			zap.Duration("heartbeat interval", s.heartbeatInterval))
+		return nil
+	}
 }
 
-func (s *seed) heartbeat() {
+func (s *seed) heartbeat() error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	var conn *grpc.ClientConn
 	var err error
-	for conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil; {
-		s.logger.Error("Could not dial to register. Retry 5 seconds later", zap.String("address", s.registryEndpoint.String()))
-		time.Sleep(time.Second * 5)
-		conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure())
+	if conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil {
+		return err
 	}
 	defer conn.Close()
 
@@ -320,18 +323,19 @@ func (s *seed) heartbeat() {
 	}
 
 	reply := &api_v1.HeartbeatReply{}
-	for reply, err = c.Heartbeat(ctx, req); err != nil; {
-		s.logger.Error("Failed to send heartbeat to registry. Retry 5 seconds later.", zap.Error(err))
-		time.Sleep(time.Second * 5)
+	if reply, err = c.Heartbeat(ctx, req); err != nil {
+		return err
+	} else {
+		s.logger.Debug("Received heartbeat reply from registry",
+			zap.Int64("node id", reply.NodeId),
+			zap.Int("peers", len(reply.Peers)))
+		s.peers = reply.Peers
+		if s.nodeId != int(reply.NodeId) {
+			s.logger.Debug("Received new node id from registry", zap.Int64("node id", reply.NodeId))
+		}
+		s.nodeId = int(reply.NodeId)
+		return nil
 	}
-	s.logger.Debug("Received heartbeat reply from registry",
-		zap.Int64("node id", reply.NodeId),
-		zap.Int("peers", len(reply.Peers)))
-	s.peers = reply.Peers
-	if s.nodeId != int(reply.NodeId) {
-		s.logger.Debug("Received new node id from registry", zap.Int64("node id", reply.NodeId))
-	}
-	s.nodeId = int(reply.NodeId)
 }
 
 // randomlyPick randomly picks n gossip peers
