@@ -101,6 +101,8 @@ func (sp *spanProcessor) ProcessSpans(spans []*model.Span) error {
 	for _, span := range spans {
 		if ok := sp.enqueueSpan(span); !ok {
 			return fmt.Errorf("span processor is busy")
+		} else {
+			sp.logger.Debug("received span", zap.Stringer("span", span))
 		}
 	}
 	return nil
