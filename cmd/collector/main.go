@@ -73,6 +73,8 @@ func main() {
 			// Evaluator
 			eval := evaluator.NewEvaluator(logger)
 
+			logger.Info("Starting gossip seed")
+
 			// Gossip Seed
 			seedOpts := new(seed.Flags).InitFromViper(v)
 			gossipSeed, err := server.CreateAndStartSeed(&server.SeedParams{
@@ -89,6 +91,8 @@ func main() {
 			if err != nil {
 				return err
 			}
+
+			logger.Info("Initializing span processor")
 
 			// Span Processor
 			spOpts := new(processor.Flags).InitFromViper(v)
@@ -130,6 +134,8 @@ func main() {
 
 			if err := c.Start(); err != nil {
 				logger.Fatal("Failed to start collector", zap.Error(err))
+			} else {
+				logger.Info("Started collector")
 			}
 
 			svc.RunAndThen(func() {
