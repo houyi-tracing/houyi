@@ -73,9 +73,11 @@ func main() {
 			// Evaluator
 			eval := evaluator.NewEvaluator(logger)
 
-			logger.Info("Starting gossip seed")
+			// Filter
+			sf := filter.NewSpanFilter()
 
 			// Gossip Seed
+			logger.Info("Starting gossip seed")
 			seedOpts := new(seed.Flags).InitFromViper(v)
 			gossipSeed, err := server.CreateAndStartSeed(&server.SeedParams{
 				Logger:     logger,
@@ -92,21 +94,19 @@ func main() {
 				return err
 			}
 
-			logger.Info("Initializing span processor")
-
 			// Span Processor
+			logger.Info("Initializing span processor")
 			spOpts := new(processor.Flags).InitFromViper(v)
 			sp := processor.NewSpanProcessor(logger,
 				processor.Options.NumWorkers(spOpts.NumWorkers),
 				processor.Options.GossipSeed(gossipSeed),
 				processor.Options.TraceGraph(traceGraph),
 				processor.Options.EvaluateSpan(eval.Evaluate),
+				processor.Options.FilterSpan(sf.Filter),
 				processor.Options.StrategyManagerEndpoint(&routing.Endpoint{
 					Addr: spOpts.StrategyManagerAddr,
 					Port: spOpts.StrategyManagerPort,
 				}))
-
-			sf := filter.NewSpanFilter()
 
 			// reuse span writer of Jaeger
 			baseFactory := svc.MetricsFactory.Namespace(metrics.NSOptions{Name: "houyi"})
