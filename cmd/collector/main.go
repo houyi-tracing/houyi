@@ -157,6 +157,7 @@ func main() {
 		rootCmd,
 		processor.AddFlags,
 		seed.AddFlags,
+		app.AddFlags,
 		storageFactory.AddFlags,
 		svc.AddFlags)
 
