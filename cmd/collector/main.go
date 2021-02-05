@@ -94,6 +94,19 @@ func main() {
 				return err
 			}
 
+			// reuse span writer of Jaeger
+			baseFactory := svc.MetricsFactory.Namespace(metrics.NSOptions{Name: "houyi"})
+			storageFactory.InitFromViper(v)
+			if err := storageFactory.Initialize(baseFactory, logger); err != nil {
+				logger.Fatal("Failed to init storage factory", zap.Error(err))
+				return err
+			}
+			sw, err := storageFactory.CreateSpanWriter()
+			if err != nil {
+				logger.Fatal("Failed to create span writer", zap.Error(err))
+				return err
+			}
+
 			// Span Processor
 			logger.Info("Initializing span processor")
 			spOpts := new(processor.Flags).InitFromViper(v)
@@ -103,37 +116,23 @@ func main() {
 				processor.Options.TraceGraph(traceGraph),
 				processor.Options.EvaluateSpan(eval.Evaluate),
 				processor.Options.FilterSpan(sf.Filter),
+				processor.Options.SpanWriter(sw),
 				processor.Options.StrategyManagerEndpoint(&routing.Endpoint{
 					Addr: spOpts.StrategyManagerAddr,
 					Port: spOpts.StrategyManagerPort,
 				}))
 
-			// reuse span writer of Jaeger
-			baseFactory := svc.MetricsFactory.Namespace(metrics.NSOptions{Name: "houyi"})
-			storageFactory.InitFromViper(v)
-			if err := storageFactory.Initialize(baseFactory, logger); err != nil {
-				logger.Fatal("Failed to init storage factory", zap.Error(err))
-			}
-			sw, err := storageFactory.CreateSpanWriter()
-			if err != nil {
-				logger.Fatal("Failed to create span writer", zap.Error(err))
-			}
-
 			// Collector
 			cOpts := new(app.Flags).InitFromViper(v)
 			c := app.NewCollector(&app.CollectorParams{
 				Logger:         logger,
-				TraceGraph:     traceGraph,
-				GossipSeed:     gossipSeed,
-				Evaluator:      eval,
 				SpanProcessor:  sp,
-				SpanFilter:     sf,
-				SpanWriter:     sw,
 				GrpcListenPort: cOpts.GrpcListenPort,
 			})
 
 			if err := c.Start(); err != nil {
 				logger.Fatal("Failed to start collector", zap.Error(err))
+				return err
 			} else {
 				logger.Info("Started collector")
 			}

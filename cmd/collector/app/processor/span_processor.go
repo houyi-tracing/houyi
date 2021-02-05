@@ -35,6 +35,8 @@ import (
 const (
 	ParentTagNameService   = "p-svc"
 	ParentTagNameOperation = "p-op"
+
+	QueueCapacity = 1048576 // 2 ^ 20
 )
 
 type queueItem struct {
@@ -85,11 +87,12 @@ func newSpanProcessor(logger *zap.Logger, opts ...Option) *spanProcessor {
 		evaluateSpan:            o.evaluateSpan,
 		spanWriter:              o.spanWriter,
 		strategyManagerEndpoint: o.strategyManagerEndpoint,
-		queue:                   queue.NewDynamicQueue(),
+		queue:                   queue.NewSyncPoolQueue(QueueCapacity),
 		traceGraph:              o.traceGraph,
 		seed:                    o.seed,
 		opCh:                    make(chan *api_v1.Operation, 1000),
 		stopCh:                  make(chan *sync.WaitGroup),
+		workers:                 o.numWorkers,
 	}
 	processSpanFuncs := []ProcessSpan{sp.parseSpan, sp.saveSpan}
 	sp.processSpan = ChainedProcessSpan(processSpanFuncs...)
@@ -101,8 +104,6 @@ func (sp *spanProcessor) ProcessSpans(spans []*model.Span) error {
 	for _, span := range spans {
 		if ok := sp.enqueueSpan(span); !ok {
 			return fmt.Errorf("span processor is busy")
-		} else {
-			sp.logger.Debug("received span", zap.Stringer("span", span))
 		}
 	}
 	return nil
@@ -132,6 +133,17 @@ func (sp *spanProcessor) saveSpan(span *model.Span) {
 
 	if err := sp.spanWriter.WriteSpan(context.TODO(), span); err != nil {
 		sp.logger.Error("Failed to save span", zap.Error(err))
+	} else {
+		sp.logger.Debug("Saved span",
+			zap.Uint64("trace ID High", span.TraceID.High),
+			zap.Uint64("trace ID Low", span.TraceID.Low),
+			zap.Uint64("span ID", uint64(span.SpanID)),
+			zap.String("operation", span.OperationName),
+			zap.String("service", span.Process.ServiceName),
+			zap.Time("start time", span.StartTime),
+			zap.Duration("duration", span.Duration),
+			zap.Any("Tags", span.Tags),
+			zap.Any("Logs", span.Logs))
 	}
 }
 
@@ -149,39 +161,36 @@ func (sp *spanProcessor) enqueueSpan(span *model.Span) bool {
 }
 
 func (sp *spanProcessor) parseSpan(span *model.Span) {
-	pSvc, pOp := getTagStrVal(span, ParentTagNameService), getTagStrVal(span, ParentTagNameOperation)
-
-	if pSvc == "" || pOp == "" {
-		return
-	}
-
-	parentOp := &api_v1.Operation{
-		Service:   pSvc,
-		Operation: pOp,
-	}
 	currOp := &api_v1.Operation{
 		Service:   span.GetOperationName(),
 		Operation: span.GetProcess().ServiceName,
-	}
-	rel := &api_v1.Relation{
-		From: parentOp,
-		To:   currOp,
-	}
-
-	if !sp.traceGraph.Has(parentOp) {
-		sp.seed.MongerNewOperation(parentOp)
-	}
-	if !sp.traceGraph.Has(currOp) {
-		sp.seed.MongerNewOperation(currOp)
-	}
-
-	if !sp.traceGraph.HasRelation(rel) {
-		sp.seed.MongerNewRelation(rel)
 	}
 
 	// Evaluate a span whether it is need to be promoted
 	if sp.evaluateSpan(span) {
 		sp.opCh <- currOp
+	}
+	if !sp.traceGraph.Has(currOp) {
+		sp.seed.MongerNewOperation(currOp)
+	}
+
+	pSvc, pOp := getTagStrVal(span, ParentTagNameService), getTagStrVal(span, ParentTagNameOperation)
+	if pSvc == "" || pOp == "" {
+		return
+	}
+	parentOp := &api_v1.Operation{
+		Service:   pSvc,
+		Operation: pOp,
+	}
+	rel := &api_v1.Relation{
+		From: parentOp,
+		To:   currOp,
+	}
+	if !sp.traceGraph.Has(parentOp) {
+		sp.seed.MongerNewOperation(parentOp)
+	}
+	if !sp.traceGraph.HasRelation(rel) {
+		sp.seed.MongerNewRelation(rel)
 	}
 }
 

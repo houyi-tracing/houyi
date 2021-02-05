@@ -22,7 +22,7 @@ import (
 
 const (
 	numWorkers         = "num.workers"
-	strategyMangerAddr = "strategy.manager.address"
+	strategyMangerAddr = "strategy.manager.addr"
 	strategyMangerPort = "strategy.manager.port"
 
 	DefaultNumWorkers          = 4

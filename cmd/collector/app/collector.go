@@ -15,13 +15,8 @@
 package app
 
 import (
-	"github.com/houyi-tracing/houyi/cmd/collector/app/filter"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/processor"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/server"
-	"github.com/houyi-tracing/houyi/pkg/evaluator"
-	"github.com/houyi-tracing/houyi/pkg/gossip"
-	"github.com/houyi-tracing/houyi/pkg/tg"
-	"github.com/jaegertracing/jaeger/storage/spanstore"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -29,37 +24,20 @@ import (
 type CollectorParams struct {
 	Logger         *zap.Logger
 	GrpcListenPort int
-	TraceGraph     tg.TraceGraph
-	GossipSeed     gossip.Seed
-	Evaluator      evaluator.Evaluator
 	SpanProcessor  processor.SpanProcessor
-	SpanFilter     filter.SpanFilter
-	SpanWriter     spanstore.Writer
 }
 
 type Collector struct {
 	logger         *zap.Logger
 	grpcServer     *grpc.Server
 	grpcListenPort int
-
-	spanProcessor processor.SpanProcessor
-	spanFilter    filter.SpanFilter
-	spanWriter    spanstore.Writer
-
-	traceGraph tg.TraceGraph
-	evaluator  evaluator.Evaluator
-	gossipSeed gossip.Seed
+	spanProcessor  processor.SpanProcessor
 }
 
 func NewCollector(params *CollectorParams) *Collector {
 	return &Collector{
 		logger:         params.Logger,
 		spanProcessor:  params.SpanProcessor,
-		spanFilter:     params.SpanFilter,
-		spanWriter:     params.SpanWriter,
-		traceGraph:     params.TraceGraph,
-		evaluator:      params.Evaluator,
-		gossipSeed:     params.GossipSeed,
 		grpcListenPort: params.GrpcListenPort,
 	}
 }

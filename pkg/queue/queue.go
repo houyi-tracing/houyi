@@ -41,7 +41,6 @@ type DynamicQueue interface {
 	Size() int
 	StartConsumers(workers int, consumer func(item interface{}))
 	Stop()
-	resize()
 }
 
 type dq struct {

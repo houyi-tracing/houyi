@@ -21,16 +21,12 @@ import (
 	jaeger "github.com/jaegertracing/jaeger/proto-gen/api_v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
 )
 
 // CollectorTransport reuses gRPC connection from agent to collector.
 type CollectorTransport struct {
 	logger *zap.Logger
-
-	c    jaeger.CollectorServiceClient
-	conn *grpc.ClientConn
-	ep   *routing.Endpoint
+	ep     *routing.Endpoint
 }
 
 func NewCollectorTransport(logger *zap.Logger, ep *routing.Endpoint) *CollectorTransport {
@@ -38,36 +34,25 @@ func NewCollectorTransport(logger *zap.Logger, ep *routing.Endpoint) *CollectorT
 		logger: logger,
 		ep:     ep,
 	}
-	conn, err := grpc.Dial(ep.String(), grpc.WithInsecure())
-	if err != nil {
-		logger.Fatal("Failed to dial to remote collector", zap.Error(err))
-		return nil
-	}
-	ct.conn = conn
-	ct.c = jaeger.NewCollectorServiceClient(conn)
 	return ct
 }
 
 func (t *CollectorTransport) PostSpans(ctx context.Context, req *jaeger.PostSpansRequest) (*jaeger.PostSpansResponse, error) {
-	if t.conn.GetState() == connectivity.Shutdown {
-		conn, err := grpc.Dial(t.ep.String(), grpc.WithInsecure())
-		if err != nil {
-			t.logger.Fatal("Connection is closed and client failed to dial to remote collector", zap.Error(err))
-			return &jaeger.PostSpansResponse{}, err
-		}
-		t.conn = conn
-		t.c = jaeger.NewCollectorServiceClient(conn)
+	conn, err := grpc.Dial(t.ep.String(), grpc.WithInsecure())
+	if err != nil {
+		return &jaeger.PostSpansResponse{}, err
+	} else {
+		defer conn.Close()
 	}
-	return t.c.PostSpans(ctx, req)
+
+	c := jaeger.NewCollectorServiceClient(conn)
+	return c.PostSpans(ctx, req)
 }
 
 // CollectorTransport reuses gRPC connection from agent to strategy manager.
 type StrategyManagerTransport struct {
 	logger *zap.Logger
-
-	c    api_v1.StrategyManagerClient
-	conn *grpc.ClientConn
-	ep   *routing.Endpoint
+	ep     *routing.Endpoint
 }
 
 func NewStrategyManagerTransport(logger *zap.Logger, ep *routing.Endpoint) *StrategyManagerTransport {
@@ -75,25 +60,17 @@ func NewStrategyManagerTransport(logger *zap.Logger, ep *routing.Endpoint) *Stra
 		logger: logger,
 		ep:     ep,
 	}
-	conn, err := grpc.Dial(ep.String(), grpc.WithInsecure())
-	if err != nil {
-		logger.Fatal("Failed to dial to remote strategy manager", zap.Error(err))
-		return nil
-	}
-	ct.conn = conn
-	ct.c = api_v1.NewStrategyManagerClient(conn)
 	return ct
 }
 
 func (t *StrategyManagerTransport) GetStrategy(ctx context.Context, req *api_v1.StrategyRequest) (*api_v1.StrategyResponse, error) {
-	if t.conn.GetState() == connectivity.Shutdown {
-		conn, err := grpc.Dial(t.ep.String(), grpc.WithInsecure())
-		if err != nil {
-			t.logger.Fatal("Connection is closed and client failed to dial to remote strategy manager", zap.Error(err))
-			return &api_v1.StrategyResponse{}, err
-		}
-		t.conn = conn
-		t.c = api_v1.NewStrategyManagerClient(conn)
+	conn, err := grpc.Dial(t.ep.String(), grpc.WithInsecure())
+	if err != nil {
+		t.logger.Fatal("Connection is closed and client failed to dial to remote strategy manager", zap.Error(err))
+		return &api_v1.StrategyResponse{}, err
+	} else {
+		defer conn.Close()
 	}
-	return t.c.GetStrategy(ctx, req)
+	c := api_v1.NewStrategyManagerClient(conn)
+	return c.GetStrategy(ctx, req)
 }
