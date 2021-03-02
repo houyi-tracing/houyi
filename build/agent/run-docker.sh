@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_CMD="docker run -d -p 5775:5775 -p 5778:5778 -p 6831:6831 -p 6832:6832 -p 14271:14271 --name houyi-agent"
+ROOT_CMD="docker run -d -p 22590:22590 -p 14680:14680 --name houyi-agent"
 
 if [[ ${COLLECTOR_ADDR} ]]; then
   ROOT_CMD="${ROOT_CMD} --env COLLECTOR_ADDR=${COLLECTOR_ADDR}"

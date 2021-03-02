@@ -3,7 +3,7 @@
 ROOT_CMD='./sm'
 
 if [[ ${LOG_LEVEL} ]]; then
-  ROOT_CMD="${ROOT_CMD} --log-level=${LOG_LEVEL}"
+  ROOT_CMD="${ROOT_CMD} --log.level=${LOG_LEVEL}"
 fi
 if [[ ${GRPC_LISTEN_PORT} ]]; then
   ROOT_CMD="${ROOT_CMD} --grpc.listen.port=${GRPC_LISTEN_PORT}"

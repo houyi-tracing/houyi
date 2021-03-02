@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  labels:
+    app: registry
+    service: registry
+spec:
+  ports:
+    - port: 22590
+      name: admin
+    - port: 22600
+      name: grpc-gossip
+  selector:
+    app: registry
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: houyi-registry
+  labels:
+    account: houyi-registry
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry-v1
+  labels:
+    app: registry
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: registry
+      version: v1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: registry
+        version: v1
+    spec:
+      serviceAccountName: houyi-registry
+      containers:
+        - name: houyi-registry
+          image: houyitracing/registry
+          imagePullPolicy: Always
+          env:
+            - name: LOG_LEVEL
+              value: "info"
+            - name: LISTEN_PORT
+              value: "22600"
+            - name: REFRESH_INTERVAL
+              value: "5s"
+            - name: RANDOM_PICK
+              value: "5"
+            - name: PROB_TO_R
+              value: "0.25"
+          ports:
+            - containerPort: 22590
+            - containerPort: 22600
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: { }
+---

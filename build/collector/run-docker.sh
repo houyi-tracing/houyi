@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_CMD='docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-collector'
+ROOT_CMD='docker run -d -p 22590:22590 -p 22650:22650 -p 14580:14580 --name houyi-collector'
 
 if [[ -z $CASSANDRA_SERVERS ]]; then
   echo "\$CASSANDRA_SERVERS must be set"

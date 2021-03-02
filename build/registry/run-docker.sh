@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_CMD='docker run -d -p 14250:14250 -p 14268:14268 -p 14269:14269 --name houyi-registry'
+ROOT_CMD='docker run -d -p 22590:22590 -p 22600:22600 --name houyi-registry'
 
 if [[ ${LOG_LEVEL} ]]; then
   ROOT_CMD="${ROOT_CMD} --env LOG_LEVEL=${LOG_LEVEL}"

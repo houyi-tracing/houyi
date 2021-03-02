@@ -3,7 +3,7 @@
 ROOT_CMD='./registry'
 
 if [[ ${LOG_LEVEL} ]]; then
-  ROOT_CMD="${ROOT_CMD} --log-level=${LOG_LEVEL}"
+  ROOT_CMD="${ROOT_CMD} --log.level=${LOG_LEVEL}"
 fi
 
 if [[ ${LISTEN_PORT} ]]; then

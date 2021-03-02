@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: collector
+  labels:
+    app: collector
+    service: collector
+spec:
+  ports:
+    - port: 22590
+      name: admin
+    - port: 14580
+      name: grpc-traces
+    - port: 22650
+      name: grpc-gossip
+  selector:
+    app: collector
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: houyi-collector
+  labels:
+    account: houyi-collector
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector-v1
+  labels:
+    app: collector
+    version: v1
+spec:
+  selector:
+    matchLabels:
+      app: collector
+      version: v1
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: collector
+        version: v1
+    spec:
+      serviceAccountName: houyi-collector
+      containers:
+        - name: houyi-collector
+          image: houyitracing/collector
+          imagePullPolicy: Always
+          env:
+            - name: CASSANDRA_SERVERS
+              value: "133.133.135.38"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: STRATEGY_MANAGER_ADDR
+              value: "strategy_manager"
+            - name: GOSSIP_REGISTRY_ADDR
+              value: "registry"
+          ports:
+            - containerPort: 22590
+            - containerPort: 14580
+            - containerPort: 22650
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: { }
+---
