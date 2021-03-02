@@ -10,12 +10,9 @@ else
 fi
 
 if [[ ${LOG_LEVEL} ]]; then
-  ROOT_CMD="${ROOT_CMD} --log-level=${LOG_LEVEL}"
+  ROOT_CMD="${ROOT_CMD} --log.level=${LOG_LEVEL}"
 fi
 
-if [[ ${SST_MAX_CHILD_NODES} ]]; then
-  ROOT_CMD="${ROOT_CMD} --sst.max.child.nodes=${SST_MAX_CHILD_NODES}"
-fi
 if [[ ${COLLECTOR_GRPC_PORT} ]]; then
   ROOT_CMD="${ROOT_CMD} --collector.grpc.port=${COLLECTOR_GRPC_PORT}"
 fi
@@ -32,6 +29,14 @@ if [[ ${GOSSIP_REGISTRY_GRPC_PORT} ]]; then
 fi
 if [[ ${GOSSIP_SEED_LRU_SIZE} ]]; then
   ROOT_CMD="${ROOT_CMD} --gossip.seed.lru.size=${GOSSIP_SEED_LRU_SIZE}"
+fi
+
+# Strategy Manager
+if [[ ${STRATEGY_MANAGER_ADDR} ]]; then
+  ROOT_CMD="${ROOT_CMD} --strategy.manager.addr=${STRATEGY_MANAGER_ADDR}"
+fi
+if [[ ${STRATEGY_MANAGER_PORT} ]]; then
+  ROOT_CMD="${ROOT_CMD} --strategy.manager.port=${STRATEGY_MANAGER_PORT}"
 fi
 
 echo $ROOT_CMD

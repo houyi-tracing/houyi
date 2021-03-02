@@ -18,7 +18,7 @@ cat <<EOF > Dockerfile
 FROM alpine:3.7
 COPY collector /opt/ms/
 COPY ${RUN_COLLECTOR} /opt/ms/
-EXPOSE 22590 14580
+EXPOSE 22590 22650 14580
 WORKDIR /opt/ms/
 ENTRYPOINT ["/opt/ms/${RUN_COLLECTOR}"]
 EOF

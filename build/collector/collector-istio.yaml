@@ -7,19 +7,13 @@ spec:
     istio: ingressgateway
   servers:
     - port:
-        number: 14268
-        name: http
-        protocol: HTTP
-      hosts:
-        - "*"
-    - port:
-        number: 14269
+        number: 22580
         name: admin-http
         protocol: HTTP
       hosts:
         - "*"
     - port:
-        number: 14250
+        number: 14580
         name: grpc
         protocol: GRPC
       hosts:
@@ -39,27 +33,31 @@ spec:
     - name: "collector-http"
       match:
         - uri:
-            prefix: /api/strategy
-        - uri:
-            prefix: /api/filter_tags
-        - uri:
-            prefix: /api/traces
-        - uri:
-            prefix: /api/update_filter
+            prefix: /health
       route:
         - destination:
             host: collector
             port:
-              number: 14268
+              number: 22590
             subset: v1
   tcp:
-    - match:
+    - name: "traces"
+      match:
         - port: 14250
       route:
         - destination:
             host: collector
             port:
               number: 14250
+            subset: v1
+    - name: "gossip"
+      match:
+        - port: 22650
+      route:
+        - destination:
+            host: collector
+            port:
+              number: 22650
             subset: v1
 ---
 

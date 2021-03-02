@@ -7,12 +7,12 @@ metadata:
     service: collector
 spec:
   ports:
-    - port: 14268
-      name: http
-    - port: 14250
-      name: grpc
-    - port: 14269
+    - port: 22590
       name: admin
+    - port: 14580
+      name: grpc-traces
+    - port: 22650
+      name: grpc-gossip
   selector:
     app: collector
 ---
@@ -35,7 +35,7 @@ spec:
     matchLabels:
       app: collector
       version: v1
-  replicas: 1
+  replicas: 3
   template:
     metadata:
       labels:
@@ -48,16 +48,18 @@ spec:
           image: houyitracing/collector
           imagePullPolicy: Always
           env:
-            - name: MAX_NUM_CHILD_NODES
-              value: "4"
             - name: CASSANDRA_SERVERS
               value: "133.133.135.38"
             - name: LOG_LEVEL
               value: "info"
+            - name: STRATEGY_MANAGER_ADDR
+              value: "strategy_manager"
+            - name: GOSSIP_REGISTRY_ADDR
+              value: "registry"
           ports:
-            - containerPort: 14250
-            - containerPort: 14268
-            - containerPort: 14269
+            - containerPort: 22590
+            - containerPort: 14580
+            - containerPort: 22650
           volumeMounts:
             - name: tmp
               mountPath: /tmp
