@@ -107,6 +107,18 @@ func (h *GrpcHandler) UpdateTags(_ context.Context, request *api_v1.UpdateTagsRe
 	return &api_v1.UpdateTagsReply{}, nil
 }
 
+func (h *GrpcHandler) GetServices(_ context.Context, req *api_v1.GetServicesRequest) (*api_v1.GetServicesReply, error) {
+	h.logger.Debug("Received request to GetServices")
+
+	return &api_v1.GetServicesReply{Services: h.tg.Services()}, nil
+}
+
+func (h *GrpcHandler) GetOperations(_ context.Context, req *api_v1.GetOperationsRequest) (*api_v1.GetOperationsReply, error) {
+	h.logger.Debug("Received request to GetServices")
+
+	return &api_v1.GetOperationsReply{Operations: h.tg.Operations(req.GetService())}, nil
+}
+
 func (h *GrpcHandler) dynamicStrategy(request *api_v1.StrategyRequest) (*api_v1.StrategyResponse, error) {
 	strategies := make([]*api_v1.DynamicPerOperationSampling, 0)
 	serviceName := request.GetService()

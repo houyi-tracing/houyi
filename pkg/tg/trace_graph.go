@@ -207,6 +207,20 @@ func (t *traceGraph) Traces(op *api_v1.Operation) ([]*api_v1.TraceNode, error) {
 	}
 }
 
+func (t *traceGraph) Services() []string {
+	t.RLock()
+	defer t.RUnlock()
+
+	return t.nodes.Services()
+}
+
+func (t *traceGraph) Operations(svc string) []string {
+	t.RLock()
+	defer t.RUnlock()
+
+	return t.nodes.Operations(svc)
+}
+
 func (t *traceGraph) Size() int {
 	t.RLock()
 	defer t.RUnlock()

@@ -188,11 +188,11 @@ func TestMongerNewRelation(t *testing.T) {
 	lock := &sync.RWMutex{}
 
 	// params
-	seeds := 128
+	nSeed := 80
 	maxWaitTime := time.Second * 5
 	received := make(map[int]int)
 
-	for i := 0; i < seeds; i++ {
+	for i := 0; i < nSeed; i++ {
 		go func(id int, msgCnt map[int]int, l *sync.RWMutex) {
 			f := func(_ *api_v1.Relation) {
 				l.Lock()
@@ -234,7 +234,7 @@ func TestMongerNewRelation(t *testing.T) {
 			break
 		}
 
-		if !flag && len(received) == seeds {
+		if !flag && len(received) == nSeed {
 			flag = true
 			fmt.Println("converge: ", time.Now().Sub(startTime).String())
 		}
@@ -245,7 +245,7 @@ func TestMongerNewRelation(t *testing.T) {
 		total += msgCnt
 	}
 	fmt.Println("total message:", total)
-	assert.GreaterOrEqual(t, total, seeds)
+	assert.GreaterOrEqual(t, total, nSeed)
 }
 
 func TestRemoveDeadSeeds(t *testing.T) {

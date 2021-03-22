@@ -143,6 +143,50 @@ func TestSamplingRateMustBeGreaterAfterPromoting(t *testing.T) {
 	check(root, root, t)
 }
 
+func Test(t *testing.T) {
+	order := 4
+	N := 50
+	times := 40
+
+	tree := NewSamplingStrategyTree(order)
+
+	ops := make([]*api_v1.Operation, 0, N)
+
+	for i := 0; i < N; i++ {
+		op := &api_v1.Operation{
+			Service:   "svc",
+			Operation: fmt.Sprintf("op_%d", i),
+		}
+		tree.Add(op)
+		ops = append(ops, op)
+	}
+
+	for k := 0; k < N; k++ {
+		sr, _ := tree.Generate(ops[k])
+		fmt.Printf("%f", sr.SamplingRate)
+		if k != N-1 {
+			fmt.Printf("\t")
+		} else {
+			fmt.Printf("\n")
+		}
+	}
+
+	for i := 0; i < N*2; i++ {
+		for j := 0; j < times; j++ {
+			tree.Promote(ops[i%N])
+		}
+		for k := 0; k < N; k++ {
+			sr, _ := tree.Generate(ops[k])
+			fmt.Printf("%.12f", sr.SamplingRate)
+			if k != N-1 {
+				fmt.Printf("\t")
+			} else {
+				fmt.Printf("\n")
+			}
+		}
+	}
+}
+
 func check(root, currNode *treeNode, t *testing.T) int {
 	sum := 0
 	for _, n := range currNode.childNodes.all() {

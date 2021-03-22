@@ -31,10 +31,10 @@ type OperationStore interface {
 }
 
 type tItem struct {
-	upSince time.Time
-	isEntry bool
-	qps     float64
-	op      *api_v1.Operation
+	upSince   time.Time
+	isIngress bool
+	qps       float64
+	op        *api_v1.Operation
 }
 
 type opStore struct {
@@ -79,13 +79,13 @@ func (t *opStore) UpToDate(op *api_v1.Operation, isIngress bool, qps float64) {
 	if item, has := t.m[svcName][opName]; has {
 		item.upSince = time.Now()
 		item.qps = qps
-		item.isEntry = isIngress
+		item.isIngress = isIngress
 	} else {
 		t.m[svcName][opName] = &tItem{
-			upSince: time.Now(),
-			op:      op,
-			qps:     qps,
-			isEntry: isIngress,
+			upSince:   time.Now(),
+			op:        op,
+			qps:       qps,
+			isIngress: isIngress,
 		}
 	}
 }
@@ -97,13 +97,13 @@ func (t *opStore) QpsWeight(op *api_v1.Operation) float64 {
 	if t.has(op) {
 		svcN, opN := op.Service, op.Operation
 		curr := t.m[svcN][opN]
-		if curr.qps == 0 || !curr.isEntry {
+		if curr.qps == 0 || !curr.isIngress {
 			return 1.0
 		}
 		total := 0.0
 		for _, opMap := range t.m {
 			for _, item := range opMap {
-				if item.isEntry && item.qps != 0 {
+				if item.isIngress && item.qps != 0 {
 					total += 1 / item.qps
 				}
 			}

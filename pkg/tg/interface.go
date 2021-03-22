@@ -49,6 +49,10 @@ type TraceGraph interface {
 	// Each element of returned slice is an entry operation.
 	Traces(op *api_v1.Operation) ([]*api_v1.TraceNode, error)
 
+	Services() []string
+
+	Operations(string) []string
+
 	// Size returns the number of operations in this trace graph.
 	Size() int
 }

@@ -18,6 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TraceGraphManagerClient interface {
 	Traces(ctx context.Context, in *Operation, opts ...grpc.CallOption) (*TracesReply, error)
+	GetServices(ctx context.Context, in *GetServicesRequest, opts ...grpc.CallOption) (*GetServicesReply, error)
+	GetOperations(ctx context.Context, in *GetOperationsRequest, opts ...grpc.CallOption) (*GetOperationsReply, error)
 }
 
 type traceGraphManagerClient struct {
@@ -37,11 +39,31 @@ func (c *traceGraphManagerClient) Traces(ctx context.Context, in *Operation, opt
 	return out, nil
 }
 
+func (c *traceGraphManagerClient) GetServices(ctx context.Context, in *GetServicesRequest, opts ...grpc.CallOption) (*GetServicesReply, error) {
+	out := new(GetServicesReply)
+	err := c.cc.Invoke(ctx, "/trace.TraceGraphManager/GetServices", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *traceGraphManagerClient) GetOperations(ctx context.Context, in *GetOperationsRequest, opts ...grpc.CallOption) (*GetOperationsReply, error) {
+	out := new(GetOperationsReply)
+	err := c.cc.Invoke(ctx, "/trace.TraceGraphManager/GetOperations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TraceGraphManagerServer is the server API for TraceGraphManager service.
 // All implementations must embed UnimplementedTraceGraphManagerServer
 // for forward compatibility
 type TraceGraphManagerServer interface {
 	Traces(context.Context, *Operation) (*TracesReply, error)
+	GetServices(context.Context, *GetServicesRequest) (*GetServicesReply, error)
+	GetOperations(context.Context, *GetOperationsRequest) (*GetOperationsReply, error)
 	mustEmbedUnimplementedTraceGraphManagerServer()
 }
 
@@ -51,6 +73,12 @@ type UnimplementedTraceGraphManagerServer struct {
 
 func (UnimplementedTraceGraphManagerServer) Traces(context.Context, *Operation) (*TracesReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Traces not implemented")
+}
+func (UnimplementedTraceGraphManagerServer) GetServices(context.Context, *GetServicesRequest) (*GetServicesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServices not implemented")
+}
+func (UnimplementedTraceGraphManagerServer) GetOperations(context.Context, *GetOperationsRequest) (*GetOperationsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOperations not implemented")
 }
 func (UnimplementedTraceGraphManagerServer) mustEmbedUnimplementedTraceGraphManagerServer() {}
 
@@ -83,6 +111,42 @@ func _TraceGraphManager_Traces_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TraceGraphManager_GetServices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetServicesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TraceGraphManagerServer).GetServices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/trace.TraceGraphManager/GetServices",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TraceGraphManagerServer).GetServices(ctx, req.(*GetServicesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TraceGraphManager_GetOperations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOperationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TraceGraphManagerServer).GetOperations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/trace.TraceGraphManager/GetOperations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TraceGraphManagerServer).GetOperations(ctx, req.(*GetOperationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _TraceGraphManager_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "trace.TraceGraphManager",
 	HandlerType: (*TraceGraphManagerServer)(nil),
@@ -90,6 +154,14 @@ var _TraceGraphManager_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Traces",
 			Handler:    _TraceGraphManager_Traces_Handler,
+		},
+		{
+			MethodName: "GetServices",
+			Handler:    _TraceGraphManager_GetServices_Handler,
+		},
+		{
+			MethodName: "GetOperations",
+			Handler:    _TraceGraphManager_GetOperations_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

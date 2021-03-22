@@ -114,8 +114,9 @@ func (t *sst) getNode(op *api_v1.Operation) *treeNode {
 }
 
 func (t *sst) promote(gp, p, node *treeNode) {
+	p.childNodes.remove(node)
+
 	if gp.hasRoom() {
-		p.childNodes.remove(node)
 		gp.childNodes.add(node)
 
 		node.parent = gp
@@ -126,11 +127,9 @@ func (t *sst) promote(gp, p, node *treeNode) {
 		lruNode := gp.lruChild(p)
 		if p.childN() > 2 {
 			lruNode.splitSelfAndMerge(node)
-			p.childNodes.remove(node)
 			p.leafCnt -= node.leafCnt
 		} else {
 			gp.childNodes.remove(lruNode)
-			p.childNodes.remove(node)
 			lruNode.parent = p
 
 			p.childNodes.add(lruNode)

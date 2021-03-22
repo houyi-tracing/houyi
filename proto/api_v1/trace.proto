@@ -29,6 +29,22 @@ message TracesReply {
   repeated TraceNode entries = 1;
 }
 
+message GetServicesRequest {}
+
+message GetServicesReply{
+  repeated string services = 1;
+}
+
+message GetOperationsRequest {
+  string service = 1;
+}
+
+message GetOperationsReply {
+  repeated string operations = 1;
+}
+
 service TraceGraphManager {
   rpc Traces(houyi.Operation) returns (TracesReply);
+  rpc GetServices(GetServicesRequest) returns (GetServicesReply);
+  rpc GetOperations(GetOperationsRequest) returns (GetOperationsReply);
 }

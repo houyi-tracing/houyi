@@ -71,6 +71,7 @@ func serveGrpc(s *grpc.Server, lis net.Listener, params *GrpcServerParams) error
 	api_v1.RegisterDynamicStrategyManagerServer(s, grpcHandler)
 	api_v1.RegisterStrategyManagerServer(s, grpcHandler)
 	api_v1.RegisterTraceGraphManagerServer(s, grpcHandler)
+	api_v1.RegisterEvaluatorManagerServer(s, grpcHandler)
 
 	go func() {
 		if err := s.Serve(lis); err != nil {

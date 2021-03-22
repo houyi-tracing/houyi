@@ -164,6 +164,26 @@ func (m nodeMap) All() []*node {
 	return ret
 }
 
+func (m nodeMap) Services() []string {
+	ret := make([]string, 0, len(m))
+	for svc := range m {
+		ret = append(ret, svc)
+	}
+	return ret
+}
+
+func (m nodeMap) Operations(svc string) []string {
+	if svcMap, ok := m[svc]; ok {
+		ret := make([]string, 0, len(svcMap))
+		for op := range svcMap {
+			ret = append(ret, op)
+		}
+		return ret
+	} else {
+		return []string{}
+	}
+}
+
 func (m nodeMap) Size() int {
 	return len(m)
 }
