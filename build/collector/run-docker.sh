@@ -32,6 +32,14 @@ if [[ ${GOSSIP_SEED_LRU_SIZE} ]]; then
   ROOT_CMD="${ROOT_CMD} --env GOSSIP_SEED_LRU_SIZE=${GOSSIP_SEED_LRU_SIZE}"
 fi
 
+# Strategy Manager
+if [[ ${STRATEGY_MANAGER_ADDR} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env STRATEGY_MANAGER_ADDR=${STRATEGY_MANAGER_ADDR}"
+fi
+if [[ ${STRATEGY_MANAGER_PORT} ]]; then
+  ROOT_CMD="${ROOT_CMD} --env STRATEGY_MANAGER_PORT=${STRATEGY_MANAGER_PORT}"
+fi
+
 ROOT_CMD="${ROOT_CMD} houyitracing/collector"
 
 echo $ROOT_CMD
