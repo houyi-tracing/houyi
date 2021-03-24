@@ -1,51 +1,49 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: collector
+  name: strategy-manager
   labels:
-    app: collector
-    service: collector
+    app: strategy-manager
+    service: strategy-manager
 spec:
   ports:
     - port: 22590
       name: admin
-    - port: 14580
-      name: grpc-traces
-    - port: 22650
-      name: grpc-gossip
+    - port: 18760
+      name: grpc
   selector:
-    app: collector
+    app: strategy-manager
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: houyi-collector
+  name: strategy-manager
   labels:
-    account: houyi-collector
+    account: strategy-manager
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: collector-v1
+  name: strategy-manager-v1
   labels:
-    app: collector
+    app: strategy-manager
     version: v1
 spec:
   selector:
     matchLabels:
-      app: collector
+      app: strategy-manager
       version: v1
   replicas: 3
   template:
     metadata:
       labels:
-        app: collector
+        app: strategy-manager
         version: v1
     spec:
-      serviceAccountName: houyi-collector
+      serviceAccountName: strategy-manager
       containers:
-        - name: houyi-collector
-          image: houyitracing/collector
+        - name: strategy-manager
+          image: houyitracing/strategy-manager
           imagePullPolicy: Always
           env:
             - name: CASSANDRA_SERVERS
@@ -58,8 +56,7 @@ spec:
               value: '1m'
           ports:
             - containerPort: 22590
-            - containerPort: 14580
-            - containerPort: 22650
+            - containerPort: 18760
           volumeMounts:
             - name: tmp
               mountPath: /tmp

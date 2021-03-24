@@ -389,13 +389,7 @@ func getClientIp() (string, error) {
 	}
 
 	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok &&
-			!ipnet.IP.IsLoopback() &&
-			!ipnet.IP.IsMulticast() &&
-			!ipnet.IP.IsGlobalUnicast() &&
-			!ipnet.IP.IsInterfaceLocalMulticast() &&
-			!ipnet.IP.IsLinkLocalMulticast() &&
-			!ipnet.IP.IsUnspecified() {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
 				return ipnet.IP.String(), nil
 			}
