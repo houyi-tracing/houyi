@@ -299,3 +299,8 @@ func BenchmarkRandom(b *testing.B) {
 
 	fmt.Println(cnt / float64(b.N))
 }
+
+func TestGetIp(t *testing.T) {
+	ip, err := getClientIp()
+	fmt.Println(ip, err)
+}

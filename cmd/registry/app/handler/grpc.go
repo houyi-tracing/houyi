@@ -19,8 +19,6 @@ import (
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"go.uber.org/zap"
-	"google.golang.org/grpc/peer"
-	"net"
 )
 
 type GrpcHandler struct {
@@ -38,7 +36,7 @@ func NewGrpcHandler(logger *zap.Logger, registry gossip.Registry) api_v1.Registr
 }
 
 func (h *GrpcHandler) Register(ctx context.Context, req *api_v1.RegisterRequest) (*api_v1.RegisterRely, error) {
-	ip := extractIp(ctx)
+	ip := req.GetIp()
 	port := req.GetPort()
 
 	nodeId, randomPick, interval, probToR := h.registry.Register(ip, int(port))
@@ -52,7 +50,7 @@ func (h *GrpcHandler) Register(ctx context.Context, req *api_v1.RegisterRequest)
 
 func (h *GrpcHandler) Heartbeat(ctx context.Context, req *api_v1.HeartbeatRequest) (*api_v1.HeartbeatReply, error) {
 	id := req.GetNodeId()
-	ip := extractIp(ctx)
+	ip := req.GetIp()
 	port := req.GetPort()
 
 	id, peers := h.registry.Heartbeat(id, ip, int(port))
@@ -60,13 +58,4 @@ func (h *GrpcHandler) Heartbeat(ctx context.Context, req *api_v1.HeartbeatReques
 		NodeId: id,
 		Peers:  peers,
 	}, nil
-}
-
-func extractIp(ctx context.Context) string {
-	p, _ := peer.FromContext(ctx)
-	if tcpAddr, ok := p.Addr.(*net.TCPAddr); ok {
-		return tcpAddr.IP.String()
-	} else {
-		return ""
-	}
 }

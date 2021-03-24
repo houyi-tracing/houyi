@@ -16,6 +16,7 @@ package seed
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
@@ -280,7 +281,12 @@ func (s *seed) register() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	ip, err := getClientIp()
+	if err != nil {
+		return err
+	}
 	req := &api_v1.RegisterRequest{
+		Ip:   ip,
 		Port: int64(s.listenPort),
 	}
 
@@ -317,7 +323,12 @@ func (s *seed) heartbeat() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	ip, err := getClientIp()
+	if err != nil {
+		return err
+	}
 	req := &api_v1.HeartbeatRequest{
+		Ip:     ip,
 		NodeId: int64(s.nodeId),
 		Port:   int64(s.listenPort),
 	}
@@ -368,4 +379,30 @@ func min(a, b int) int {
 	} else {
 		return b
 	}
+}
+
+func getClientIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+
+	if err != nil {
+		return "", err
+	}
+
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok &&
+			!ipnet.IP.IsLoopback() &&
+			!ipnet.IP.IsMulticast() &&
+			!ipnet.IP.IsGlobalUnicast() &&
+			!ipnet.IP.IsInterfaceLocalMulticast() &&
+			!ipnet.IP.IsLinkLocalMulticast() &&
+			!ipnet.IP.IsUnspecified() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String(), nil
+			}
+
+		}
+	}
+
+	return "", errors.New("Can not find the client ip address!")
+
 }
