@@ -51,7 +51,7 @@ spec:
             - name: LISTEN_PORT
               value: "22600"
             - name: REFRESH_INTERVAL
-              value: "5s"
+              value: "10s"
             - name: RANDOM_PICK
               value: "5"
             - name: PROB_TO_R
