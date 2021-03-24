@@ -1,31 +1,12 @@
 apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: houyi-registry
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-    - port:
-        number: 22600
-        name: grpc
-        protocol: GRPC
-      hosts:
-        - "*"
----
-
-apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: houyi-registry
+  name: registry
 spec:
   hosts:
-    - "*"
-  gateways:
-    - houyi-registry
+    - registry
   tcp:
-    - name: "gossip"
-      match:
+    - match:
         - port: 22600
       route:
         - destination:

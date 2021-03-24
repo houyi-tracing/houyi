@@ -30,7 +30,7 @@ const (
 	DefaultCollectorAddr       = "collector"
 	DefaultCollectorPort       = ports.CollectorGrpcListenPort
 	DefaultStrategyManagerAddr = "strategy-manager"
-	DefaultStrategyManagerPort = ports.RegistryGrpcListenPort
+	DefaultStrategyManagerPort = ports.StrategyManagerGrpcListenPort
 	DefaultGrpcListenPort      = ports.AgentGrpcListenPort
 )
 

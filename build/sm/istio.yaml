@@ -1,61 +1,24 @@
 apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  name: houyi-collector
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-    - port:
-        number: 22580
-        name: admin-http
-        protocol: HTTP
-      hosts:
-        - "*"
-    - port:
-        number: 14580
-        name: grpc
-        protocol: GRPC
-      hosts:
-        - "*"
----
-
-apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: houyi-collector
+  name: strategy-manager
 spec:
   hosts:
-    - "*"
-  gateways:
-    - houyi-collector
-  http:
-    - name: "collector-http"
-      match:
-        - uri:
-            prefix: /health
-      route:
-        - destination:
-            host: collector
-            port:
-              number: 22590
-            subset: v1
+    - strategy-manager
   tcp:
-    - name: "traces"
-      match:
-        - port: 14250
+    - match:
+        - port: 18760
       route:
         - destination:
-            host: collector
+            host: strategy-manager
             port:
-              number: 14250
+              number: 18760
             subset: v1
-    - name: "gossip"
-      match:
+    - match:
         - port: 22650
       route:
         - destination:
-            host: collector
+            host: strategy-manager
             port:
               number: 22650
             subset: v1
@@ -64,9 +27,9 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: collector
+  name: strategy-manager
 spec:
-  host: collector
+  host: strategy-manager
   subsets:
     - name: v1
       labels:

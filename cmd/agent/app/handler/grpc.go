@@ -39,7 +39,13 @@ func NewGrpcHandler(logger *zap.Logger, ct *transport.CollectorTransport, smt *t
 }
 
 func (p *GrpcHandler) GetStrategy(ctx context.Context, request *api_v1.StrategyRequest) (*api_v1.StrategyResponse, error) {
-	return p.strategyManagerTransport.GetStrategy(ctx, request)
+	p.logger.Debug("GetStrategy", zap.String("request", request.String()))
+
+	resp, err := p.strategyManagerTransport.GetStrategy(ctx, request)
+	if err != nil {
+		p.logger.Error("failed to get strategies", zap.Error(err))
+	}
+	return resp, err
 }
 
 func (p *GrpcHandler) PostSpans(ctx context.Context, request *jaeger.PostSpansRequest) (*jaeger.PostSpansResponse, error) {
