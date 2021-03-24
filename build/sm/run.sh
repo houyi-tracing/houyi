@@ -22,9 +22,6 @@ fi
 if [[ ${GOSSIP_REGISTRY_ADDR} ]]; then
   ROOT_CMD="${ROOT_CMD} --gossip.registry.addr=${GOSSIP_REGISTRY_ADDR}"
 fi
-if [[ ${GOSSIP_REGISTRY_GRPC_PORT} ]]; then
-  ROOT_CMD="${ROOT_CMD} --gossip.registry.grpc.port=${GOSSIP_REGISTRY_GRPC_PORT}"
-fi
 if [[ ${GOSSIP_SEED_LRU_SIZE} ]]; then
   ROOT_CMD="${ROOT_CMD} --gossip.seed.lru.size=${GOSSIP_SEED_LRU_SIZE}"
 fi
