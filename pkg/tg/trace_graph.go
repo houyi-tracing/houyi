@@ -115,15 +115,19 @@ func (t *traceGraph) AddRelation(rel *api_v1.Relation) error {
 
 	from, to := rel.GetFrom(), rel.GetTo()
 	if t.has(from) && t.has(to) {
-		fromNode, toNode := t.get(from), t.get(to)
-		addRelation(fromNode, toNode)
+		if from.Service == to.Service && from.Operation == to.Operation {
+			return fmt.Errorf("can not add relation for two same operations")
+		} else {
+			fromNode, toNode := t.get(from), t.get(to)
+			addRelation(fromNode, toNode)
 
-		if toNode.HasIn(t.globalRoot) {
-			removeRelation(t.globalRoot, toNode)
+			if toNode.HasIn(t.globalRoot) {
+				removeRelation(t.globalRoot, toNode)
+			}
+
+			t.logger.Debug("added relation", zap.String("relation", rel.String()))
+			return nil
 		}
-
-		t.logger.Debug("added relation", zap.String("relation", rel.String()))
-		return nil
 	} else {
 		return fmt.Errorf(OperationDoesNotExistErr)
 	}
@@ -156,8 +160,14 @@ func (t *traceGraph) HasRelation(rel *api_v1.Relation) bool {
 
 	from, to := rel.GetFrom(), rel.GetTo()
 	if t.has(from) && t.has(to) {
-		fromNode, toNode := t.get(from), t.get(to)
-		return fromNode.HasOut(toNode) && toNode.HasIn(fromNode)
+		if from.Service == to.Service && from.Operation == to.Operation {
+			// we suppose that there is an underlying but actually not exist edge between two same operation
+			// to avoid infinite loop in graph search algorithms.
+			return true
+		} else {
+			fromNode, toNode := t.get(from), t.get(to)
+			return fromNode.HasOut(toNode) && toNode.HasIn(fromNode)
+		}
 	} else {
 		return false
 	}
@@ -252,7 +262,9 @@ func (t *traceGraph) searchIngresses(n *node, result []*api_v1.Operation, hasSea
 		result = append(result, n.operation)
 	} else {
 		for _, next := range n.in.All() {
-			result = t.searchIngresses(next, result, hasSearched)
+			if next.operation.Service != n.operation.Service && next.operation.Operation != n.operation.Operation {
+				result = t.searchIngresses(next, result, hasSearched)
+			}
 		}
 	}
 	return result
