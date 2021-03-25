@@ -49,5 +49,9 @@ func (p *GrpcHandler) GetStrategy(ctx context.Context, request *api_v1.StrategyR
 }
 
 func (p *GrpcHandler) PostSpans(ctx context.Context, request *jaeger.PostSpansRequest) (*jaeger.PostSpansResponse, error) {
-	return p.collectorTransport.PostSpans(ctx, request)
+	resp, err := p.collectorTransport.PostSpans(ctx, request)
+	if err != nil {
+		p.logger.Error("failed to post spans", zap.Error(err))
+	}
+	return resp, err
 }

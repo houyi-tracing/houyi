@@ -13,21 +13,18 @@ if [[ ${LOG_LEVEL} ]]; then
   ROOT_CMD="${ROOT_CMD} --log.level=${LOG_LEVEL}"
 fi
 
-if [[ ${COLLECTOR_GRPC_PORT} ]]; then
-  ROOT_CMD="${ROOT_CMD} --collector.grpc.port=${COLLECTOR_GRPC_PORT}"
+if [[ ${COLLECTOR_SERVICE_PORT_GRPC_TRACES} ]]; then
+  ROOT_CMD="${ROOT_CMD} --collector.grpc.port=${COLLECTOR_SERVICE_PORT_GRPC_TRACES}"
 fi
 
 # Gossip
-if [[ ${GOSSIP_REGISTRY_ADDR} ]]; then
-  ROOT_CMD="${ROOT_CMD} --gossip.registry.addr=${GOSSIP_REGISTRY_ADDR}"
+if [[ ${REGISTRY_SERVICE_PORT_GRPC_GOSSIP} ]]; then
+  ROOT_CMD="${ROOT_CMD} --gossip.registry.grpc.port=${REGISTRY_SERVICE_PORT_GRPC_GOSSIP}"
 fi
 
 # Strategy Manager
-if [[ ${STRATEGY_MANAGER_ADDR} ]]; then
-  ROOT_CMD="${ROOT_CMD} --strategy.manager.addr=${STRATEGY_MANAGER_ADDR}"
-fi
-if [[ ${STRATEGY_MANAGER_PORT} ]]; then
-  ROOT_CMD="${ROOT_CMD} --strategy.manager.port=${STRATEGY_MANAGER_PORT}"
+if [[ ${STRATEGY_MANAGER_SERVICE_PORT_GRPC} ]]; then
+  ROOT_CMD="${ROOT_CMD} --strategy.manager.port=${STRATEGY_MANAGER_SERVICE_PORT_GRPC}"
 fi
 
 echo $ROOT_CMD

@@ -16,14 +16,8 @@ if [[ ${SCALE_FACTOR} ]]; then
 fi
 
 # Gossip
-if [[ ${GOSSIP_SEED_GRPC_PORT} ]]; then
-  ROOT_CMD="${ROOT_CMD} --gossip.seed.grpc.port=${GOSSIP_SEED_GRPC_PORT}"
-fi
-if [[ ${GOSSIP_REGISTRY_ADDR} ]]; then
-  ROOT_CMD="${ROOT_CMD} --gossip.registry.addr=${GOSSIP_REGISTRY_ADDR}"
-fi
-if [[ ${GOSSIP_SEED_LRU_SIZE} ]]; then
-  ROOT_CMD="${ROOT_CMD} --gossip.seed.lru.size=${GOSSIP_SEED_LRU_SIZE}"
+if [[ ${REGISTRY_SERVICE_PORT_GRPC_GOSSIP} ]]; then
+  ROOT_CMD="${ROOT_CMD} --gossip.registry.grpc.port=${REGISTRY_SERVICE_PORT_GRPC_GOSSIP}"
 fi
 
 echo $ROOT_CMD
