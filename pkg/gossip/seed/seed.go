@@ -337,9 +337,9 @@ func (s *seed) heartbeat() error {
 	if reply, err = c.Heartbeat(ctx, req); err != nil {
 		return err
 	} else {
-		s.logger.Debug("Received heartbeat reply from registry",
-			zap.Int64("node id", reply.NodeId),
-			zap.Int("peers", len(reply.Peers)))
+		//s.logger.Debug("Received heartbeat reply from registry",
+		//	zap.Int64("node id", reply.NodeId),
+		//	zap.Int("peers", len(reply.Peers)))
 		s.peers = reply.Peers
 		if s.nodeId != int(reply.NodeId) {
 			s.logger.Debug("Received new node id from registry", zap.Int64("node id", reply.NodeId))
