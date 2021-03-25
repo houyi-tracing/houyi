@@ -31,3 +31,6 @@ cp ${RUN_SHELL_DOCKER} ${BUILD_OUT_DIR}/
 BUILD_RUN_SHELL_DOCKER=build-docker.sh
 chmod u+x ${BUILD_RUN_SHELL_DOCKER}
 cp ${BUILD_RUN_SHELL_DOCKER} ${BUILD_OUT_DIR}/
+
+cp istio.yaml ${BUILD_OUT_DIR}/
+cp kube.yaml ${BUILD_OUT_DIR}/

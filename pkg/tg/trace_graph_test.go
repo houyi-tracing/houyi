@@ -204,3 +204,52 @@ func TestGenerateTraces(t *testing.T) {
 		}
 	}
 }
+
+func TestGetServices(t *testing.T) {
+	logger, _ := zap.NewDevelopment()
+	tg := NewTraceGraph(logger)
+
+	opN := 7
+	ops := make([]*api_v1.Operation, 7)
+	for i := 0; i < opN; i++ {
+		ops[i] = &api_v1.Operation{
+			Service:   fmt.Sprintf("svc-%d", i),
+			Operation: fmt.Sprintf("op-%d", i),
+		}
+		assert.Nil(t, tg.Add(ops[i]))
+	}
+
+	// 0
+	// 1 	2
+	// 3 4 	5 6
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[0],
+		To:   ops[1],
+	}))
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[0],
+		To:   ops[2],
+	}))
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[1],
+		To:   ops[3],
+	}))
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[1],
+		To:   ops[4],
+	}))
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[2],
+		To:   ops[5],
+	}))
+	assert.Nil(t, tg.AddRelation(&api_v1.Relation{
+		From: ops[2],
+		To:   ops[6],
+	}))
+
+	services := tg.Services()
+	assert.Equal(t, opN, len(services))
+	for _, s := range services {
+		fmt.Println(s)
+	}
+}

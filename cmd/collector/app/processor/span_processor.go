@@ -162,8 +162,8 @@ func (sp *spanProcessor) enqueueSpan(span *model.Span) bool {
 
 func (sp *spanProcessor) parseSpan(span *model.Span) {
 	currOp := &api_v1.Operation{
-		Service:   span.GetOperationName(),
-		Operation: span.GetProcess().ServiceName,
+		Service:   span.GetProcess().ServiceName,
+		Operation: span.GetOperationName(),
 	}
 
 	// Evaluate a span whether it is need to be promoted
