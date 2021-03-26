@@ -1,0 +1,72 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: config-server
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 21620
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: config-server
+spec:
+  hosts:
+    - config-server
+  gateways:
+    - config-server
+  http:
+    - match:
+        - port: 21620
+      route:
+        - destination:
+            host: config-server
+            port:
+              number: 21620
+            subset: v1
+    - match:
+        - port: 22590
+      route:
+        - destination:
+            host: config-server
+            port:
+              number: 22590
+            subset: v1
+  tcp:
+    - match:
+        - port: 22600
+      route:
+        - destination:
+            host: config-server
+            port:
+              number: 22600
+            subset: v1
+    - match:
+        - port: 21520
+      route:
+        - destination:
+            host: config-server
+            port:
+              number: 21520
+            subset: v1
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: config-server
+spec:
+  host: config-server
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+---

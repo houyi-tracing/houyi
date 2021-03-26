@@ -1,62 +1,62 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: sm
+  name: config-server
   labels:
-    app: sm
-    service: sm
+    app: config-server
+    service: config-server
 spec:
   ports:
     - port: 22590
       name: admin
-    - port: 18760
+    - port: 22650
+      name: gossip
+    - port: 21520
       name: grpc
+    - port: 21620
+      name: http
   selector:
-    app: sm
+    app: registry
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: sm
+  name: config-server
   labels:
-    account: sm
+    account: config-server
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sm-v1
+  name: config-server-v1
   labels:
-    app: sm
+    app: config-server
     version: v1
 spec:
   selector:
     matchLabels:
-      app: sm
+      app: config-server
       version: v1
+  replicas: 1
   template:
-    replicas: 3
     metadata:
       labels:
-        app: sm
+        app: config-server
         version: v1
     spec:
-      serviceAccountName: sm
+      serviceAccountName: config-server
       containers:
-        - name: sm
-          image: houyitracing/sm
+        - name: config-server
+          image: houyitracing/config-server
           imagePullPolicy: Always
           env:
-            - name: CASSANDRA_SERVERS
-              value: "133.133.135.38"
             - name: LOG_LEVEL
-              value: "info"
-            - name: GOSSIP_REGISTRY_ADDR
-              value: "registry"
-            - name: REFRESH_INTERVAL
-              value: '1m'
+              value: "debug"
           ports:
             - containerPort: 22590
-            - containerPort: 18760
+            - containerPort: 22650
+            - containerPort: 21520
+            - containerPort: 21620
           volumeMounts:
             - name: tmp
               mountPath: /tmp

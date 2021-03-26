@@ -47,6 +47,7 @@ func NewStrategyManagerGrpcHandler(logger *zap.Logger,
 	opStore store.OperationStore,
 	eval evaluator.Evaluator,
 	scaleFactor float64,
+	strategyStore store.StrategyStore,
 	minSamplingRate float64,
 	seed gossip.Seed) *StrategyManagerGrpcHandler {
 	return &StrategyManagerGrpcHandler{
@@ -57,6 +58,7 @@ func NewStrategyManagerGrpcHandler(logger *zap.Logger,
 		eval:            eval,
 		scaleFactor:     scaleFactor,
 		minSamplingRate: minSamplingRate,
+		strategyStore:   strategyStore,
 		gossipSeed:      seed,
 	}
 }

@@ -275,39 +275,44 @@ func (s *seed) msgMonger() {
 func (s *seed) register() error {
 	var conn *grpc.ClientConn
 	var err error
-	if conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure(), grpc.WithBlock()); conn == nil || err != nil {
-		return err
-	}
-	defer conn.Close()
+	for {
+		conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure(), grpc.WithBlock())
+		if err != nil || conn == nil {
+			s.logger.Error("failed to dial to registry")
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		defer conn.Close()
 
-	c := api_v1.NewRegistryClient(conn)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+		c := api_v1.NewRegistryClient(conn)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	ip, err := getClientIp()
-	if err != nil {
-		return err
-	}
-	req := &api_v1.RegisterRequest{
-		Ip:   ip,
-		Port: int64(s.listenPort),
-	}
+		ip, err := getClientIp()
+		if err != nil {
+			return err
+		}
+		req := &api_v1.RegisterRequest{
+			Ip:   ip,
+			Port: int64(s.listenPort),
+		}
 
-	reply := &api_v1.RegisterRely{}
-	if reply, err = c.Register(ctx, req); err != nil {
-		return nil
-	} else {
-		s.nodeId = int(reply.NodeId)
-		s.randomPick = int(reply.RandomPick)
-		s.heartbeatInterval = time.Duration(reply.Interval)
-		s.probToR = reply.ProbToR
+		reply := &api_v1.RegisterRely{}
+		if reply, err = c.Register(ctx, req); err != nil {
+			return nil
+		} else {
+			s.nodeId = int(reply.NodeId)
+			s.randomPick = int(reply.RandomPick)
+			s.heartbeatInterval = time.Duration(reply.Interval)
+			s.probToR = reply.ProbToR
 
-		s.logger.Info("Received reply from registry",
-			zap.Int("node id", s.nodeId),
-			zap.Int("random pick", s.randomPick),
-			zap.Float64("probability to R", s.probToR),
-			zap.Duration("heartbeat interval", s.heartbeatInterval))
-		return nil
+			s.logger.Info("Received reply from registry",
+				zap.Int("node id", s.nodeId),
+				zap.Int("random pick", s.randomPick),
+				zap.Float64("probability to R", s.probToR),
+				zap.Duration("heartbeat interval", s.heartbeatInterval))
+			return nil
+		}
 	}
 }
 

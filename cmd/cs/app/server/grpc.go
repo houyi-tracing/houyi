@@ -77,6 +77,7 @@ func serverGrpc(s *grpc.Server, lis net.Listener, params *GrpcServerParams) erro
 		params.OperationStore,
 		params.Evaluator,
 		params.ScaleFactor,
+		params.StrategyStore,
 		params.MinSamplingRate,
 		params.GossipSeed)
 	api_v1.RegisterStrategyManagerServer(s, smGrpcHandler)
