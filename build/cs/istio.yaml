@@ -20,7 +20,7 @@ metadata:
   name: config-server
 spec:
   hosts:
-    - "*"
+    - config-server
   gateways:
     - config-server
   http:

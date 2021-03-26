@@ -71,17 +71,15 @@ func main() {
 			eval := evaluator.NewEvaluator(logger)
 
 			csOpts := new(app.Flags).InitFromViper(v)
-			r := registry.NewRegistry(logger,
+			gossipRegistry := registry.NewRegistry(logger,
 				csOpts.RandomPick,
 				csOpts.ProbToR,
 				csOpts.HeartbeatInterval)
-			if err := r.Start(); err != nil {
+			if err := gossipRegistry.Start(); err != nil {
 				logger.Fatal("failed to start registry", zap.Error(err))
 			}
 
 			strategyStore := store.NewStrategyStore()
-
-			gossipRegistry := registry.NewRegistry(logger, csOpts.RandomPick, csOpts.ProbToR, csOpts.HeartbeatInterval)
 
 			// Gossip Seed
 			seedOpts := new(seed.Flags).InitFromViper(v)
@@ -124,6 +122,9 @@ func main() {
 			svc.RunAndThen(func() {
 				// Do something before completing shutting down.
 				// for example, closing I/O or DB connection, etc.
+				if err = gossipRegistry.Stop(); err != nil {
+					logger.Error("failed to stop registry", zap.Error(err))
+				}
 				if err = cs.Stop(); err != nil {
 					logger.Error("failed to stop configuration server", zap.Error(err))
 				}

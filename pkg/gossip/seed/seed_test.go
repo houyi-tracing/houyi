@@ -32,9 +32,10 @@ func TestSeedCanConnectToRegistry(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	s := NewSeed(logger,
 		Options.ConfigServerEndpoint(&routing.Endpoint{
-			Addr: "133.133.135.38",
+			Addr: "192.168.31.77",
 			Port: ports.ConfigServerGrpcListenPort,
 		}),
+		Options.ListenPort(22879),
 	)
 	_ = s.Start()
 	time.Sleep(time.Minute)
