@@ -90,7 +90,7 @@ func main() {
 				ListenPort: seedOpts.SeedGrpcPort,
 				LruSize:    seedOpts.LruSize,
 				ConfigServerEndpoint: &routing.Endpoint{
-					Addr: seedOpts.ConfigServerAddress,
+					Addr: "localhost",
 					Port: seedOpts.ConfigServerGrpcPort,
 				},
 				TraceGraph: traceGraph,
