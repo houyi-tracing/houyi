@@ -16,6 +16,11 @@ package tg
 
 import "github.com/houyi-tracing/houyi/idl/api_v1"
 
+type TraceNode struct {
+	Name     string       `json:"name"`
+	Children []*TraceNode `json:"children"`
+}
+
 type TraceGraph interface {
 	// Add adds an operation into trace graph and returned error would be nil if the operation did not exist in advance.
 	Add(op *api_v1.Operation) error
@@ -45,9 +50,12 @@ type TraceGraph interface {
 	// GetIngresses returns all ingress operations relate to inputted operation.
 	GetIngresses(op *api_v1.Operation) ([]*api_v1.Operation, error)
 
+	// AllIngresses returns all ingress operations.
+	AllIngresses() []*api_v1.Operation
+
 	// Traces returns static call relationships relate to inputted operation.
 	// Each element of returned slice is an entry operation.
-	Traces(op *api_v1.Operation) ([]*api_v1.TraceNode, error)
+	Dependencies(op *api_v1.Operation) ([]*TraceNode, error)
 
 	Services() []string
 

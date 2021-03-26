@@ -27,10 +27,10 @@ import (
 )
 
 type GrpcServerParams struct {
-	Logger                  *zap.Logger
-	ListenPort              int
-	CollectorEndpoint       *routing.Endpoint
-	StrategyManagerEndpoint *routing.Endpoint
+	Logger               *zap.Logger
+	ListenPort           int
+	CollectorEndpoint    *routing.Endpoint
+	ConfigServerEndpoint *routing.Endpoint
 }
 
 func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
@@ -50,7 +50,7 @@ func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
 
 func serveGrpc(s *grpc.Server, lis net.Listener, params *GrpcServerParams) error {
 	cTransport := transport.NewCollectorTransport(params.Logger, params.CollectorEndpoint)
-	smTransport := transport.NewStrategyManagerTransport(params.Logger, params.StrategyManagerEndpoint)
+	smTransport := transport.NewStrategyManagerTransport(params.Logger, params.ConfigServerEndpoint)
 
 	h := handler.NewGrpcHandler(params.Logger, cTransport, smTransport)
 

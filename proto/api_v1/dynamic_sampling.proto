@@ -20,7 +20,7 @@ package sampling;
 
 option go_package = "github.com/houyi-tracing/houyi/idl/api_v1";
 
-enum StrategyType {
+enum Type {
   CONST = 0;
   PROBABILITY = 1;
   RATE_LIMITING = 2;
@@ -33,13 +33,12 @@ message StrategyRequest {
     string name = 1;
     double qps = 2;
   };
-  StrategyType strategyType = 1;
   string service = 2;
   repeated Operation operations = 3;
 }
 
 message ConstSampling {
-  bool sample = 1;
+  bool alwaysSample = 1;
 }
 
 message ProbabilitySampling {
@@ -50,63 +49,42 @@ message RateLimitingSampling {
   int64 maxTracesPerSecond = 1;
 }
 
-message PerOperationSampling {
-  string operation = 1;
-  ProbabilitySampling strategy = 2;
-}
-
 message AdaptiveSampling {
-  repeated PerOperationSampling strategies = 1;
+  double samplingRate = 1;
 }
 
-message DynamicPerOperationSampling {
-  string operation = 1;
-  StrategyType strategyType = 2;
+message DynamicSampling {
+  double samplingRate = 1;
+}
+
+message PerOperationStrategy {
+  string service = 1;
+  string operation = 2;
+  Type type = 3;
   oneof strategy {
     ConstSampling const = 4;
     ProbabilitySampling probability = 5;
     RateLimitingSampling rateLimiting = 6;
+    AdaptiveSampling adaptive = 7;
+    DynamicSampling dynamic = 8;
   }
 }
 
-message DynamicSampling {
-  repeated DynamicPerOperationSampling strategies = 2;
-}
-
-message StrategyResponse {
-  StrategyType strategyType = 1;
-  oneof strategy {
-    ConstSampling const = 2;
-    ProbabilitySampling probability = 3;
-    RateLimitingSampling rateLimiting = 4;
-    AdaptiveSampling adaptive = 5;
-    DynamicSampling dynamic = 6;
-  }
-}
-
-service StrategyManager {
-  rpc GetStrategy(StrategyRequest) returns(StrategyResponse);
+message StrategiesResponse {
+  repeated PerOperationStrategy strategies = 1;
 }
 
 message NullRely {}
 
-service DynamicStrategyManager {
+service StrategyManager {
+  rpc GetStrategies(StrategyRequest) returns(StrategiesResponse);
   rpc Promote(houyi.Operation) returns(NullRely) {};
-}
-
-message GetTagsRequest {}
-
-message GetTagsRely {
-  repeated houyi.EvaluatingTag tags = 1;
 }
 
 message UpdateTagsRequest {
   repeated houyi.EvaluatingTag tags = 1;
 }
 
-message UpdateTagsReply {}
-
 service EvaluatorManager {
-  rpc GetTags(GetTagsRequest) returns (GetTagsRely) {};
-  rpc UpdateTags(UpdateTagsRequest) returns (UpdateTagsReply) {};
+  rpc UpdateTags(UpdateTagsRequest) returns (NullRely) {};
 }

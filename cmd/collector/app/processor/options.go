@@ -27,12 +27,12 @@ type options struct {
 	numWorkers       int
 	registryEndpoint *routing.Endpoint
 
-	filterSpan              filter.FilterSpan
-	evaluateSpan            evaluator.EvaluateSpan
-	spanWriter              spanstore.Writer
-	traceGraph              tg.TraceGraph
-	seed                    gossip.Seed
-	strategyManagerEndpoint *routing.Endpoint
+	filterSpan     filter.FilterSpan
+	evaluateSpan   evaluator.EvaluateSpan
+	spanWriter     spanstore.Writer
+	traceGraph     tg.TraceGraph
+	seed           gossip.Seed
+	configServerEp *routing.Endpoint
 }
 
 var Options options
@@ -63,9 +63,9 @@ func (options) SpanWriter(w spanstore.Writer) Option {
 	}
 }
 
-func (options) StrategyManagerEndpoint(ep *routing.Endpoint) Option {
+func (options) ConfigServerEndpoint(ep *routing.Endpoint) Option {
 	return func(opt *options) {
-		opt.strategyManagerEndpoint = ep
+		opt.configServerEp = ep
 	}
 }
 

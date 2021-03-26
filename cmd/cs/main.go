@@ -16,7 +16,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/houyi-tracing/houyi/cmd/sm/app"
+	"github.com/houyi-tracing/houyi/cmd/cs/app"
+	"github.com/houyi-tracing/houyi/cmd/cs/app/registry"
+	"github.com/houyi-tracing/houyi/cmd/cs/app/store"
 	"github.com/houyi-tracing/houyi/pkg/config"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/houyi-tracing/houyi/pkg/gossip/seed"
@@ -28,13 +30,12 @@ import (
 	"github.com/houyi-tracing/houyi/ports"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"os"
 )
 
 const (
-	serviceName = "strategy-manger"
+	serviceName = "central-configuration-server"
 )
 
 func main() {
@@ -49,9 +50,9 @@ func main() {
 
 	rootCmd := &cobra.Command{
 		Use:   serviceName,
-		Short: "Strategy manager for Houyi tracing",
-		Long: `This is a server to store sampling strategies and process requests for 
-			pulling sampling strategies from agents.`,
+		Short: "Central configuration server of Houyi tracing",
+		Long: `This is a server to store sampling strategies and evaluator.proto, and process requests for 
+			pulling sampling strategies from agents and requests for promote operations from collectors.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := svc.Start(v); err != nil {
 				return err
@@ -61,23 +62,36 @@ func main() {
 
 			// Sampling Strategy Tree
 			sstOpts := new(sst.Flags).InitFromViper(v)
-			strategyStore := sst.NewSamplingStrategyTree(sstOpts.MaxChildNodes)
+			ssTree := sst.NewSamplingStrategyTree(sstOpts.Order)
 
 			// Trace Graph
 			traceGraph := tg.NewTraceGraph(logger)
 
-			// Evaluator
+			// evaluator
 			eval := evaluator.NewEvaluator(logger)
+
+			csOpts := new(app.Flags).InitFromViper(v)
+			r := registry.NewRegistry(logger,
+				csOpts.RandomPick,
+				csOpts.ProbToR,
+				csOpts.HeartbeatInterval)
+			if err := r.Start(); err != nil {
+				logger.Fatal("failed to start registry", zap.Error(err))
+			}
+
+			strategyStore := store.NewStrategyStore()
+
+			gossipRegistry := registry.NewRegistry(logger, csOpts.RandomPick, csOpts.ProbToR, csOpts.HeartbeatInterval)
 
 			// Gossip Seed
 			seedOpts := new(seed.Flags).InitFromViper(v)
-			gossipSeed, err := server.CreateAndStartSeed(&server.SeedParams{
+			gossipSeed, err := server.BuildSeed(&server.SeedParams{
 				Logger:     logger,
 				ListenPort: seedOpts.SeedGrpcPort,
 				LruSize:    seedOpts.LruSize,
-				RegistryEndpoint: &routing.Endpoint{
-					Addr: seedOpts.RegistryAddress,
-					Port: seedOpts.RegistryGrpcPort,
+				ConfigServerEndpoint: &routing.Endpoint{
+					Addr: seedOpts.ConfigServerAddress,
+					Port: seedOpts.ConfigServerGrpcPort,
 				},
 				TraceGraph: traceGraph,
 				Evaluator:  eval,
@@ -86,27 +100,32 @@ func main() {
 				return err
 			}
 
-			// Strategy Manager
-			smOpts := new(app.Flags).InitFromViper(v)
-			sm := app.NewStrategyManager(&app.StrategyManagerParams{
+			operationStore := store.NewOperationStore(logger, csOpts.OperationExpire, gossipSeed)
+
+			cs := app.NewConfigServer(&app.ConfigurationServerParams{
 				Logger:          logger,
-				GrpcListenPort:  smOpts.GrpcListenPort,
-				RefreshInterval: smOpts.RefreshInterval,
-				StrategyStore:   strategyStore,
+				GrpcListenPort:  csOpts.GrpcListenPort,
+				HttpListenPort:  csOpts.HttpListenPort,
+				GossipSeed:      gossipSeed,
+				GossipRegistry:  gossipRegistry,
 				TraceGraph:      traceGraph,
 				Evaluator:       eval,
-				GossipSeed:      gossipSeed,
-				ScaleFactor:     atomic.NewFloat64(smOpts.ScaleFactor),
+				StrategyStore:   strategyStore,
+				SST:             ssTree,
+				OperationStore:  operationStore,
+				ScaleFactor:     csOpts.ScaleFactor,
+				MinSamplingRate: csOpts.MinSamplingRate,
 			})
-			if err := sm.Start(); err != nil {
+
+			if err = cs.Start(); err != nil {
 				return err
 			}
 
 			svc.RunAndThen(func() {
 				// Do something before completing shutting down.
 				// for example, closing I/O or DB connection, etc.
-				if err := sm.Stop(); err != nil {
-					logger.Error("Failed to stop strategy manager", zap.Error(err))
+				if err = cs.Stop(); err != nil {
+					logger.Error("failed to stop configuration server", zap.Error(err))
 				}
 			})
 			return nil

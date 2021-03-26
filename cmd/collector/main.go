@@ -70,7 +70,7 @@ func main() {
 			// Trace Graph
 			traceGraph := tg.NewTraceGraph(logger)
 
-			// Evaluator
+			// evaluator
 			eval := evaluator.NewEvaluator(logger)
 
 			// Filter
@@ -79,13 +79,13 @@ func main() {
 			// Gossip Seed
 			logger.Info("Starting gossip seed")
 			seedOpts := new(seed.Flags).InitFromViper(v)
-			gossipSeed, err := server.CreateAndStartSeed(&server.SeedParams{
+			gossipSeed, err := server.BuildSeed(&server.SeedParams{
 				Logger:     logger,
 				ListenPort: seedOpts.SeedGrpcPort,
 				LruSize:    seedOpts.LruSize,
-				RegistryEndpoint: &routing.Endpoint{
-					Addr: seedOpts.RegistryAddress,
-					Port: seedOpts.RegistryGrpcPort,
+				ConfigServerEndpoint: &routing.Endpoint{
+					Addr: seedOpts.ConfigServerAddress,
+					Port: seedOpts.ConfigServerGrpcPort,
 				},
 				TraceGraph: traceGraph,
 				Evaluator:  eval,
@@ -117,9 +117,9 @@ func main() {
 				processor.Options.EvaluateSpan(eval.Evaluate),
 				processor.Options.FilterSpan(sf.Filter),
 				processor.Options.SpanWriter(sw),
-				processor.Options.StrategyManagerEndpoint(&routing.Endpoint{
-					Addr: spOpts.StrategyManagerAddr,
-					Port: spOpts.StrategyManagerPort,
+				processor.Options.ConfigServerEndpoint(&routing.Endpoint{
+					Addr: spOpts.ConfigServerAddr,
+					Port: spOpts.ConfigServerPort,
 				}))
 
 			// Collector

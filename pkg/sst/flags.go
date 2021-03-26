@@ -20,20 +20,20 @@ import (
 )
 
 const (
-	maxChildNodes = "sst.max.child.nodes"
+	order = "sampling.sst.order"
 
-	DefaultMaxChildNodes = 10
+	DefaultOrder = 4
 )
 
 type Flags struct {
-	MaxChildNodes int
+	Order int
 }
 
 func AddFlags(flags *flag.FlagSet) {
-	flags.Int(maxChildNodes, DefaultMaxChildNodes, "Maximum child nodes of sampling strategy tree.")
+	flags.Int(order, DefaultOrder, "[Sampling] Order of sampling strategy tree.")
 }
 
 func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
-	f.MaxChildNodes = v.GetInt(maxChildNodes)
+	f.Order = v.GetInt(order)
 	return f
 }

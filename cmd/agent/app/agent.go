@@ -22,10 +22,10 @@ import (
 )
 
 type AgentParams struct {
-	Logger                  *zap.Logger
-	GrpcListenPort          int
-	CollectorEndpoint       *routing.Endpoint
-	StrategyManagerEndpoint *routing.Endpoint
+	Logger            *zap.Logger
+	GrpcListenPort    int
+	CollectorEndpoint *routing.Endpoint
+	ConfigServerEp    *routing.Endpoint
 }
 
 // Agent is used to mask the routing information of the collector and strategy manager for the client.
@@ -36,24 +36,24 @@ type Agent struct {
 	grpcServer     *grpc.Server
 
 	cEp  *routing.Endpoint // endpoint of collector
-	smEp *routing.Endpoint // endpoint of strategy manager
+	csEp *routing.Endpoint // endpoint of configuration server
 }
 
 func NewAgent(params *AgentParams) *Agent {
 	return &Agent{
 		logger:         params.Logger,
 		cEp:            params.CollectorEndpoint,
-		smEp:           params.StrategyManagerEndpoint,
+		csEp:           params.ConfigServerEp,
 		grpcListenPort: params.GrpcListenPort,
 	}
 }
 
 func (a *Agent) Start() error {
 	if grpcServer, err := server.StartGrpcServer(&server.GrpcServerParams{
-		Logger:                  a.logger,
-		ListenPort:              a.grpcListenPort,
-		CollectorEndpoint:       a.cEp,
-		StrategyManagerEndpoint: a.smEp,
+		Logger:               a.logger,
+		ListenPort:           a.grpcListenPort,
+		CollectorEndpoint:    a.cEp,
+		ConfigServerEndpoint: a.csEp,
 	}); err != nil {
 		return err
 	} else {

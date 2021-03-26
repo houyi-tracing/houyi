@@ -21,40 +21,40 @@ import (
 )
 
 const (
-	collectorAddr       = "collector.addr"
-	collectorPort       = "collector.port"
-	strategyManagerAddr = "strategy.manager.addr"
-	strategyManagerPort = "strategy.manager.port"
-	grpcListenPort      = "grpc.listen.port"
+	collectorAddr    = "collector.addr"
+	collectorPort    = "collector.port"
+	configServerAddr = "config.server.addr"
+	configServerPort = "config.server.port"
+	grpcListenPort   = "grpc.listen.port"
 
-	DefaultCollectorAddr       = "collector"
-	DefaultCollectorPort       = ports.CollectorGrpcListenPort
-	DefaultStrategyManagerAddr = "strategy-manager"
-	DefaultStrategyManagerPort = ports.StrategyManagerGrpcListenPort
-	DefaultGrpcListenPort      = ports.AgentGrpcListenPort
+	DefaultCollectorAddr    = "collector"
+	DefaultCollectorPort    = ports.CollectorGrpcListenPort
+	DefaultConfigServerAddr = "config-server"
+	DefaultConfigServerPort = ports.ConfigServerGrpcListenPort
+	DefaultGrpcListenPort   = ports.AgentGrpcListenPort
 )
 
 type Flags struct {
-	CollectorAddr       string
-	CollectorPort       int
-	StrategyManagerAddr string
-	StrategyManagerPort int
-	GrpcListenPort      int
+	CollectorAddr    string
+	CollectorPort    int
+	ConfigServerAddr string
+	ConfigServerPort int
+	GrpcListenPort   int
 }
 
 func AddFlags(flags *flag.FlagSet) {
 	flags.String(collectorAddr, DefaultCollectorAddr, "IP or domain name of houyi collector.")
 	flags.Int(collectorPort, DefaultCollectorPort, "Port to serve gRPC of houyi collector.")
-	flags.String(strategyManagerAddr, DefaultStrategyManagerAddr, "IP or domain name of registry.")
-	flags.Int(strategyManagerPort, DefaultStrategyManagerPort, "Port to serve gRPC of gossip registry")
+	flags.String(configServerAddr, DefaultConfigServerAddr, "IP or domain name of configuration server.")
+	flags.Int(configServerPort, DefaultConfigServerPort, "Port to serve gRPC of configuration server.")
 	flags.Int(grpcListenPort, DefaultGrpcListenPort, "Port to serve gRPC of agent.")
 }
 
 func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
 	f.CollectorAddr = v.GetString(collectorAddr)
 	f.CollectorPort = v.GetInt(collectorPort)
-	f.StrategyManagerAddr = v.GetString(strategyManagerAddr)
-	f.StrategyManagerPort = v.GetInt(strategyManagerPort)
+	f.ConfigServerAddr = v.GetString(configServerAddr)
+	f.ConfigServerPort = v.GetInt(configServerPort)
 	f.GrpcListenPort = v.GetInt(grpcListenPort)
 
 	return f

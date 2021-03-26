@@ -25,25 +25,20 @@ import (
 )
 
 type SeedParams struct {
-	Logger           *zap.Logger
-	ListenPort       int
-	LruSize          int
-	RegistryEndpoint *routing.Endpoint
-	TraceGraph       tg.TraceGraph
-	Evaluator        evaluator.Evaluator
+	Logger               *zap.Logger
+	ListenPort           int
+	LruSize              int
+	ConfigServerEndpoint *routing.Endpoint
+	TraceGraph           tg.TraceGraph
+	Evaluator            evaluator.Evaluator
 }
 
-func CreateAndStartSeed(params *SeedParams) (gossip.Seed, error) {
-	params.Logger.Info("Starting gossip seed",
-		zap.Int("port", params.ListenPort),
-		zap.String("registry endpoint", params.RegistryEndpoint.String()),
-		zap.Int("LRU size for message cache", params.LruSize))
-
+func BuildSeed(params *SeedParams) (gossip.Seed, error) {
 	s := seed.NewSeed(
 		params.Logger,
 		seed.Options.ListenPort(params.ListenPort),
 		seed.Options.LruSize(params.LruSize),
-		seed.Options.RegistryEndpoint(params.RegistryEndpoint))
+		seed.Options.ConfigServerEndpoint(params.ConfigServerEndpoint))
 
 	gHandler := handler.NewHandler(params.Logger, params.TraceGraph, params.Evaluator)
 
@@ -51,10 +46,6 @@ func CreateAndStartSeed(params *SeedParams) (gossip.Seed, error) {
 	s.OnExpiredOperation(gHandler.ExpiredOperationHandler)
 	s.OnEvaluatingTags(gHandler.TagsHandler)
 	s.OnNewRelation(gHandler.RelationHandler)
-
-	if err := s.Start(); err != nil {
-		return nil, err
-	}
 
 	return s, nil
 }

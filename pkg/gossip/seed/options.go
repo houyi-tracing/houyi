@@ -22,7 +22,7 @@ import (
 type options struct {
 	lruSize            int
 	listenPort         int
-	registryEndpoint   *routing.Endpoint
+	configServerEp     *routing.Endpoint
 	onNewRelation      func(rel *api_v1.Relation)
 	onNewOperation     func(op *api_v1.Operation)
 	onExpiredOperation func(op *api_v1.Operation)
@@ -45,9 +45,9 @@ func (options) ListenPort(p int) Option {
 	}
 }
 
-func (options) RegistryEndpoint(ep *routing.Endpoint) Option {
+func (options) ConfigServerEndpoint(ep *routing.Endpoint) Option {
 	return func(opts *options) {
-		opts.registryEndpoint = ep
+		opts.configServerEp = ep
 	}
 }
 
@@ -81,8 +81,8 @@ func (o options) apply(opts ...Option) options {
 		op(&ret)
 	}
 
-	if ret.registryEndpoint == nil {
-		panic("GossipRegistry endpoint for gossip seed must not be empty")
+	if ret.configServerEp == nil {
+		panic("gossipRegistry endpoint for gossip seed must not be empty")
 	}
 	if ret.lruSize <= 0 {
 		ret.lruSize = DefaultLruSize

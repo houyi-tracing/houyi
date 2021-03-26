@@ -220,7 +220,10 @@ func (s *seed) Stop() error {
 }
 
 func (s *seed) startGrpcServer() {
-	s.logger.Info("Starting gRPC for seed...", zap.Int("port", s.listenPort))
+	s.logger.Info("Starting gGRPC server for gossip seed",
+		zap.Int("port", s.listenPort),
+		zap.String("configuration server endpoint", s.configServerEp.String()),
+		zap.Int("LRU size for message cache", s.lruSize))
 
 	conn, err := net.Listen("tcp", fmt.Sprintf(":%d", s.listenPort))
 	if err != nil {
@@ -272,7 +275,7 @@ func (s *seed) msgMonger() {
 func (s *seed) register() error {
 	var conn *grpc.ClientConn
 	var err error
-	if conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil {
+	if conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure(), grpc.WithBlock()); conn == nil || err != nil {
 		return err
 	}
 	defer conn.Close()
@@ -314,7 +317,7 @@ func (s *seed) heartbeat() error {
 
 	var conn *grpc.ClientConn
 	var err error
-	if conn, err = grpc.Dial(s.registryEndpoint.String(), grpc.WithInsecure()); conn == nil || err != nil {
+	if conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure()); conn == nil || err != nil {
 		return err
 	}
 	defer conn.Close()

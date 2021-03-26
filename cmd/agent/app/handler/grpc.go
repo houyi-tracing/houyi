@@ -38,10 +38,10 @@ func NewGrpcHandler(logger *zap.Logger, ct *transport.CollectorTransport, smt *t
 	}
 }
 
-func (p *GrpcHandler) GetStrategy(ctx context.Context, request *api_v1.StrategyRequest) (*api_v1.StrategyResponse, error) {
+func (p *GrpcHandler) GetStrategies(ctx context.Context, request *api_v1.StrategyRequest) (*api_v1.StrategiesResponse, error) {
 	p.logger.Debug("GetStrategy", zap.String("request", request.String()))
 
-	resp, err := p.strategyManagerTransport.GetStrategy(ctx, request)
+	resp, err := p.strategyManagerTransport.GetStrategies(ctx, request)
 	if err != nil {
 		p.logger.Error("failed to get strategies", zap.Error(err))
 	}

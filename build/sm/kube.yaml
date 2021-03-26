@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: strategy-manager
+  name: sm
   labels:
-    app: strategy-manager
-    service: strategy-manager
+    app: sm
+    service: sm
 spec:
   ports:
     - port: 22590
@@ -12,38 +12,38 @@ spec:
     - port: 18760
       name: grpc
   selector:
-    app: strategy-manager
+    app: sm
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: strategy-manager
+  name: sm
   labels:
-    account: strategy-manager
+    account: sm
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: strategy-manager-v1
+  name: sm-v1
   labels:
-    app: strategy-manager
+    app: sm
     version: v1
 spec:
   selector:
     matchLabels:
-      app: strategy-manager
+      app: sm
       version: v1
   template:
     replicas: 3
     metadata:
       labels:
-        app: strategy-manager
+        app: sm
         version: v1
     spec:
-      serviceAccountName: strategy-manager
+      serviceAccountName: sm
       containers:
-        - name: strategy-manager
-          image: houyitracing/strategy-manager
+        - name: sm
+          image: houyitracing/sm
           imagePullPolicy: Always
           env:
             - name: CASSANDRA_SERVERS

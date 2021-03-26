@@ -61,9 +61,9 @@ func main() {
 					Addr: aOpts.CollectorAddr,
 					Port: aOpts.CollectorPort,
 				},
-				StrategyManagerEndpoint: &routing.Endpoint{
-					Addr: aOpts.StrategyManagerAddr,
-					Port: aOpts.StrategyManagerPort,
+				ConfigServerEp: &routing.Endpoint{
+					Addr: aOpts.ConfigServerAddr,
+					Port: aOpts.ConfigServerPort,
 				},
 			})
 

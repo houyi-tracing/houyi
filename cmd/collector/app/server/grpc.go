@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/handler"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/processor"
+	"github.com/houyi-tracing/houyi/idl/api_v1"
+	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/jaegertracing/jaeger/proto-gen/api_v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -28,6 +30,7 @@ type GrpcServerParams struct {
 	Logger        *zap.Logger
 	ListenPort    int
 	SpanProcessor processor.SpanProcessor
+	Evaluator     evaluator.Evaluator
 }
 
 func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
@@ -46,8 +49,10 @@ func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
 }
 
 func serveGrpc(server *grpc.Server, lis net.Listener, params *GrpcServerParams) error {
-	gh := handler.NewGrpcHandler(params.Logger, params.SpanProcessor)
+	gh := handler.NewGrpcHandler(params.Logger, params.Evaluator, params.SpanProcessor)
+
 	api_v2.RegisterCollectorServiceServer(server, gh)
+	api_v1.RegisterEvaluatorManagerServer(server, gh)
 
 	go func() {
 		if err := server.Serve(lis); err != nil {

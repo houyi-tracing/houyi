@@ -1,16 +1,16 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: strategy-manager
+  name: sm
 spec:
   hosts:
-    - strategy-manager
+    - sm
   tcp:
     - match:
         - port: 18760
       route:
         - destination:
-            host: strategy-manager
+            host: sm
             port:
               number: 18760
             subset: v1
@@ -18,7 +18,7 @@ spec:
         - port: 22650
       route:
         - destination:
-            host: strategy-manager
+            host: sm
             port:
               number: 22650
             subset: v1
@@ -27,9 +27,9 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: strategy-manager
+  name: sm
 spec:
-  host: strategy-manager
+  host: sm
   subsets:
     - name: v1
       labels:

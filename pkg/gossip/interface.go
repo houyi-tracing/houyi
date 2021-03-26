@@ -35,6 +35,9 @@ type Registry interface {
 
 	// Heartbeat receives heartbeats from seeds and removes seeds that have not sent heartbeat messages for a long time.
 	Heartbeat(nodeId int64, ip string, port int) (int64, []*api_v1.Peer)
+
+	// AllPeers returns all alive peers
+	AllSeeds() []*api_v1.Peer
 }
 
 type Seed interface {

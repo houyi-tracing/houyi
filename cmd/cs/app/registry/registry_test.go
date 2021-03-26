@@ -12,11 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// gossip contains implementation of Gossip protocol based on SIR model.
-//
-// There are two components: gossipRegistry and Seed.
-//
-// gossipRegistry: Peer discovery and health check.
-//
-// Seed: Message mongering.
-package gossip
+package registry
+
+import (
+	"testing"
+)
+
+func TestMockRegistry(t *testing.T) {
+	//logger, _ := zap.NewDevelopment()
+	//r := NewRegistry(logger)
+	//if err := r.Start(); err != nil {
+	//	logger.Error("failed to start heartbeat", zap.Error(err))
+	//}
+	//time.Sleep(time.Hour)
+}

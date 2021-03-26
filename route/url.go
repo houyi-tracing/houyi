@@ -12,11 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// gossip contains implementation of Gossip protocol based on SIR model.
-//
-// There are two components: gossipRegistry and Seed.
-//
-// gossipRegistry: Peer discovery and health check.
-//
-// Seed: Message mongering.
-package gossip
+package route
+
+// evaluator
+const (
+	GetEvaluatorTagsRoute    = "/getEvaluator"
+	UpdateEvaluatorTagsRoute = "/updateEvaluator"
+)
+
+// Trace Graph
+const (
+	GetServicesRoute           = "/getServices"
+	GetOperationsRoute         = "/getOperations"
+	GetCausalDependenciesRoute = "/getCausalDependencies"
+)
+
+// Strategy Manager
+const (
+	GetStrategiesRoute    = "/getStrategies"
+	UpdateStrategiesRoute = "/updateStrategies"
+)

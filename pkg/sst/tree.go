@@ -69,7 +69,7 @@ func (t *sst) Promote(op *api_v1.Operation) error {
 	}
 }
 
-func (t *sst) Generate(op *api_v1.Operation) (*api_v1.ProbabilitySampling, error) {
+func (t *sst) Generate(op *api_v1.Operation) (float64, error) {
 	if t.hasOp(op) {
 		node := t.getNode(op)
 		sr, parent := 1.0, node.parent
@@ -77,9 +77,9 @@ func (t *sst) Generate(op *api_v1.Operation) (*api_v1.ProbabilitySampling, error
 			sr *= 1.0 / float64(parent.childNodes.size())
 			parent = parent.parent
 		}
-		return &api_v1.ProbabilitySampling{SamplingRate: sr}, nil
+		return sr, nil
 	} else {
-		return &api_v1.ProbabilitySampling{SamplingRate: 0}, fmt.Errorf(notExistErr)
+		return 0.0, fmt.Errorf(notExistErr)
 	}
 }
 

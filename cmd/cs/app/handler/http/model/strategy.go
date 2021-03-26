@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package model
 
-import (
-	"go.uber.org/zap"
-	"testing"
-	"time"
+const (
+	StrategyType_Const        = "const"
+	StrategyType_Probability  = "probability"
+	StrategyType_RateLimiting = "rate-limiting"
+	StrategyType_Adaptive     = "adaptive"
+	StrategyType_Dynamic      = "dynamic"
 )
 
-func TestMockRegistry(t *testing.T) {
-	logger, _ := zap.NewDevelopment()
-	r := NewRegistry(logger)
-	if err := r.Start(); err != nil {
-		logger.Error("failed to start heartbeat", zap.Error(err))
-	}
-	time.Sleep(time.Hour)
+type Strategy struct {
+	Service            string  `json:"service"`
+	Operation          string  `json:"operation"`
+	Type               string  `json:"type"`
+	SamplingRate       float64 `json:"sampling_rate"`
+	MaxTracesPerSecond int64   `json:"max_traces_per_second"`
+	AlwaysSample       bool    `json:"always_sample"`
 }

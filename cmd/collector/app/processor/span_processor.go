@@ -86,7 +86,7 @@ func newSpanProcessor(logger *zap.Logger, opts ...Option) *spanProcessor {
 		filterSpan:              o.filterSpan,
 		evaluateSpan:            o.evaluateSpan,
 		spanWriter:              o.spanWriter,
-		strategyManagerEndpoint: o.strategyManagerEndpoint,
+		strategyManagerEndpoint: o.configServerEp,
 		queue:                   queue.NewSyncPoolQueue(QueueCapacity),
 		traceGraph:              o.traceGraph,
 		seed:                    o.seed,
@@ -215,7 +215,7 @@ func (sp *spanProcessor) promoteOperation(op *api_v1.Operation) {
 		defer conn.Close()
 	}
 
-	c := api_v1.NewDynamicStrategyManagerClient(conn)
+	c := api_v1.NewStrategyManagerClient(conn)
 	ctx, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 

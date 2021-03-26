@@ -25,7 +25,7 @@ type SamplingStrategyTree interface {
 	Has(op *api_v1.Operation) bool
 
 	// Generate generates sampling strategy for inputted operation.
-	Generate(op *api_v1.Operation) (*api_v1.ProbabilitySampling, error)
+	Generate(op *api_v1.Operation) (float64, error)
 
 	// Promote promotes a operation in this tree. As a result, the sampling rate of inputted operation will increase.
 	Promote(op *api_v1.Operation) error

@@ -2,9 +2,9 @@ package seed
 
 import (
 	"fmt"
-	"github.com/houyi-tracing/houyi/cmd/registry/app"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/routing"
+	"github.com/houyi-tracing/houyi/ports"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"math/rand"
@@ -17,21 +17,21 @@ import (
 // ATTENTION: all tests below must run after starting registry!
 
 const (
-	registryIp   = "192.168.31.77"
-	registryPort = app.DefaultListenPort
+	configServerIp   = "192.168.31.77"
+	configServerPort = ports.ConfigServerGrpcListenPort
 )
 
 var (
 	registryEndpoint = &routing.Endpoint{
-		Addr: registryIp,
-		Port: registryPort,
+		Addr: configServerIp,
+		Port: configServerPort,
 	}
 )
 
 func TestSeedCanConnectToRegistry(t *testing.T) {
 	logger, _ := zap.NewDevelopment()
 	s := NewSeed(logger,
-		Options.RegistryEndpoint(registryEndpoint),
+		Options.ConfigServerEndpoint(registryEndpoint),
 	)
 	_ = s.Start()
 	time.Sleep(time.Minute)
@@ -45,7 +45,7 @@ func TestSeedNodeIdMustBeUnique(t *testing.T) {
 	for i := 0; i < n; i++ {
 		go func(id int) {
 			s := NewSeed(logger,
-				Options.RegistryEndpoint(registryEndpoint),
+				Options.ConfigServerEndpoint(registryEndpoint),
 				Options.ListenPort(28391+id))
 			nodeId := s.(*seed).nodeId
 			assert.GreaterOrEqual(t, nodeId, int64(0))
@@ -98,7 +98,7 @@ func TestMessageMongering(t *testing.T) {
 			}
 
 			s := NewSeed(logger,
-				Options.RegistryEndpoint(registryEndpoint),
+				Options.ConfigServerEndpoint(registryEndpoint),
 				Options.ListenPort(28991+id),
 				Options.OnNewRelation(relHandler))
 			s.OnEvaluatingTags(tagsHandler)
@@ -108,7 +108,7 @@ func TestMessageMongering(t *testing.T) {
 	}
 
 	s := NewSeed(logger,
-		Options.RegistryEndpoint(registryEndpoint),
+		Options.ConfigServerEndpoint(registryEndpoint),
 		Options.ListenPort(28000))
 	_ = s.Start()
 	time.Sleep(time.Second * 5)
@@ -200,7 +200,7 @@ func TestMongerNewRelation(t *testing.T) {
 				msgCnt[id]++
 			}
 			s := NewSeed(logger,
-				Options.RegistryEndpoint(registryEndpoint),
+				Options.ConfigServerEndpoint(registryEndpoint),
 				Options.ListenPort(28991+id),
 				Options.OnNewRelation(f))
 			_ = s.Start()
@@ -208,7 +208,7 @@ func TestMongerNewRelation(t *testing.T) {
 	}
 
 	s := NewSeed(logger,
-		Options.RegistryEndpoint(registryEndpoint),
+		Options.ConfigServerEndpoint(registryEndpoint),
 		Options.ListenPort(28990))
 	_ = s.Start()
 
@@ -254,7 +254,7 @@ func TestRemoveDeadSeeds(t *testing.T) {
 
 	for i := 0; i < seeds; i++ {
 		s := NewSeed(logger,
-			Options.RegistryEndpoint(registryEndpoint),
+			Options.ConfigServerEndpoint(registryEndpoint),
 			Options.ListenPort(28391+i))
 		_ = s.Start()
 	}
@@ -264,7 +264,7 @@ func TestRemoveDeadSeeds(t *testing.T) {
 func TestUniqueMessageID(t *testing.T) {
 	logger, _ := zap.NewProduction()
 	s := NewSeed(logger,
-		Options.RegistryEndpoint(registryEndpoint),
+		Options.ConfigServerEndpoint(registryEndpoint),
 		Options.ListenPort(28000))
 	se := s.(*seed)
 	unique := make(map[int64]bool)
@@ -278,7 +278,7 @@ func TestUniqueMessageID(t *testing.T) {
 func BenchmarkMsgIdGenerating(b *testing.B) {
 	logger, _ := zap.NewProduction()
 	s := NewSeed(logger,
-		Options.RegistryEndpoint(registryEndpoint),
+		Options.ConfigServerEndpoint(registryEndpoint),
 		Options.ListenPort(28000))
 	se := s.(*seed)
 	for i := 0; i < b.N; i++ {

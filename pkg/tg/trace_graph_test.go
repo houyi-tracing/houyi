@@ -193,7 +193,7 @@ func TestGenerateTraces(t *testing.T) {
 	entries, err := tg.GetIngresses(ops[6])
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(entries))
-	traces, err := tg.Traces(ops[5])
+	traces, err := tg.Dependencies(ops[5])
 	assert.Nil(t, err)
 
 	for _, trace := range traces {

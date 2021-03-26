@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// gossip contains implementation of Gossip protocol based on SIR model.
-//
-// There are two components: gossipRegistry and Seed.
-//
-// gossipRegistry: Peer discovery and health check.
-//
-// Seed: Message mongering.
-package gossip
+package model
+
+type Tag struct {
+	Name     string      `json:"name"`
+	Operator string      `json:"operator"`
+	Value    interface{} `json:"value"`
+}

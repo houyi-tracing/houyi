@@ -63,14 +63,14 @@ func NewStrategyManagerTransport(logger *zap.Logger, ep *routing.Endpoint) *Stra
 	return ct
 }
 
-func (t *StrategyManagerTransport) GetStrategy(ctx context.Context, req *api_v1.StrategyRequest) (*api_v1.StrategyResponse, error) {
+func (t *StrategyManagerTransport) GetStrategies(ctx context.Context, req *api_v1.StrategyRequest) (*api_v1.StrategiesResponse, error) {
 	conn, err := grpc.Dial(t.ep.String(), grpc.WithInsecure())
 	if err != nil {
 		t.logger.Fatal("Connection is closed and client failed to dial to remote strategy manager", zap.Error(err))
-		return &api_v1.StrategyResponse{}, err
+		return &api_v1.StrategiesResponse{}, err
 	} else {
 		defer conn.Close()
 	}
 	c := api_v1.NewStrategyManagerClient(conn)
-	return c.GetStrategy(ctx, req)
+	return c.GetStrategies(ctx, req)
 }

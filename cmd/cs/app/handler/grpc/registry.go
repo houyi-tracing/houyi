@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package handler
+package grpc
 
 import (
 	"context"
@@ -21,21 +21,21 @@ import (
 	"go.uber.org/zap"
 )
 
-type GrpcHandler struct {
+type RegistryGrpcHandler struct {
 	api_v1.UnimplementedRegistryServer
 
 	logger   *zap.Logger
 	registry gossip.Registry
 }
 
-func NewGrpcHandler(logger *zap.Logger, registry gossip.Registry) api_v1.RegistryServer {
-	return &GrpcHandler{
+func NewRegistryGrpcHandler(logger *zap.Logger, registry gossip.Registry) api_v1.RegistryServer {
+	return &RegistryGrpcHandler{
 		logger:   logger,
 		registry: registry,
 	}
 }
 
-func (h *GrpcHandler) Register(ctx context.Context, req *api_v1.RegisterRequest) (*api_v1.RegisterRely, error) {
+func (h *RegistryGrpcHandler) Register(_ context.Context, req *api_v1.RegisterRequest) (*api_v1.RegisterRely, error) {
 	ip := req.GetIp()
 	port := req.GetPort()
 
@@ -48,7 +48,7 @@ func (h *GrpcHandler) Register(ctx context.Context, req *api_v1.RegisterRequest)
 	}, nil
 }
 
-func (h *GrpcHandler) Heartbeat(ctx context.Context, req *api_v1.HeartbeatRequest) (*api_v1.HeartbeatReply, error) {
+func (h *RegistryGrpcHandler) Heartbeat(_ context.Context, req *api_v1.HeartbeatRequest) (*api_v1.HeartbeatReply, error) {
 	id := req.GetNodeId()
 	ip := req.GetIp()
 	port := req.GetPort()

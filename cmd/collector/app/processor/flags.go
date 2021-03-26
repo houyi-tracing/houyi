@@ -21,32 +21,32 @@ import (
 )
 
 const (
-	numWorkers         = "num.workers"
-	strategyMangerAddr = "strategy.manager.addr"
-	strategyMangerPort = "strategy.manager.port"
+	numWorkers       = "num.workers"
+	configServerAddr = "sampling.config.server.addr"
+	configServerPort = "sampling.config.server.port"
 
-	DefaultNumWorkers          = 4
-	DefaultStrategyManagerAddr = "strategy-manager"
-	DefaultStrategyManagerPort = ports.StrategyManagerGrpcListenPort
+	DefaultNumWorkers       = 4
+	DefaultConfigServerAddr = "config-server"
+	DefaultConfigServerPort = ports.ConfigServerGrpcListenPort
 )
 
 type Flags struct {
-	NumWorkers          int
-	StrategyManagerAddr string
-	StrategyManagerPort int
+	NumWorkers       int
+	ConfigServerAddr string
+	ConfigServerPort int
 }
 
 func AddFlags(flags *flag.FlagSet) {
 	flags.Int(numWorkers,
 		DefaultNumWorkers, "Number of workers to consume dynamic queue in span processor.")
-	flags.String(strategyMangerAddr, DefaultStrategyManagerAddr, "IP or domain name of strategy manager.")
-	flags.Int(strategyMangerPort, DefaultStrategyManagerPort, "Port to server gRPC for strategy manager")
+	flags.String(configServerAddr, DefaultConfigServerAddr, "[Sampling] IP or domain name of configuration server.")
+	flags.Int(configServerPort, DefaultConfigServerPort, "[Sampling] Port to server gRPC for configuration server.")
 }
 
 func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
 	f.NumWorkers = v.GetInt(numWorkers)
-	f.StrategyManagerAddr = v.GetString(strategyMangerAddr)
-	f.StrategyManagerPort = v.GetInt(strategyMangerPort)
+	f.ConfigServerAddr = v.GetString(configServerAddr)
+	f.ConfigServerPort = v.GetInt(configServerPort)
 
 	return f
 }

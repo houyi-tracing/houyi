@@ -18,19 +18,25 @@ import (
 	"context"
 	"fmt"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/processor"
+	"github.com/houyi-tracing/houyi/idl/api_v1"
+	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/jaegertracing/jaeger/proto-gen/api_v2"
 	"go.uber.org/zap"
 )
 
 type GrpcHandler struct {
+	api_v1.UnimplementedEvaluatorManagerServer
+
 	logger        *zap.Logger
 	spanProcessor processor.SpanProcessor
+	eval          evaluator.Evaluator
 }
 
-func NewGrpcHandler(logger *zap.Logger, sp processor.SpanProcessor) *GrpcHandler {
+func NewGrpcHandler(logger *zap.Logger, eval evaluator.Evaluator, sp processor.SpanProcessor) *GrpcHandler {
 	return &GrpcHandler{
 		logger:        logger,
 		spanProcessor: sp,
+		eval:          eval,
 	}
 }
 
@@ -45,4 +51,13 @@ func (g *GrpcHandler) PostSpans(_ context.Context, request *api_v2.PostSpansRequ
 	} else {
 		return reply, fmt.Errorf("span processor is nil")
 	}
+}
+
+func (g *GrpcHandler) UpdateTags(_ context.Context, request *api_v1.UpdateTagsRequest) (*api_v1.NullRely, error) {
+	g.logger.Debug("Received request to updateEvaluatorTags", zap.Any("tags", request.GetTags()))
+
+	g.eval.Update(&api_v1.EvaluatingTags{
+		Tags: request.GetTags(),
+	})
+	return &api_v1.NullRely{}, nil
 }

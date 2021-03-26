@@ -19,11 +19,11 @@ const (
 	AdminHttpPort = 22590 // port to serve HTTP for health checking
 
 	// Gossip
-	RegistryGrpcListenPort = 22600 // port to serve gRPC for Gossip Registry
-	SeedGrpcListenPort     = 22650 // port to serve gRPC for Gossip Seed
+	SeedGrpcListenPort = 22650 // port to serve gRPC for Gossip Seed
 
-	// Strategy Manager
-	StrategyManagerGrpcListenPort = 18760 // port to server gRPC for StrategyManager.
+	// Configuration Server
+	ConfigServerGrpcListenPort = 21520 // port to server gRPC for ConfigurationServer.
+	ConfigServerHttpListenPort = 21620 // port to server gRPC for  ConfigurationServer.
 
 	// Collector
 	CollectorGrpcListenPort = 14580

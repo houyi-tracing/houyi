@@ -21,37 +21,37 @@ import (
 )
 
 const (
-	seedGrpcPort     = "gossip.seed.grpc.port"
-	registryAddr     = "gossip.registry.addr"
-	registryGrpcPort = "gossip.registry.grpc.port"
-	lruSize          = "gossip.seed.lru.size"
+	seedGrpcPort         = "gossip.seed.grpc.port"
+	configServerAddr     = "gossip.config.server.addr"
+	configServerGrpcPort = "gossip.config.server.grpc.port"
+	lruSize              = "gossip.seed.lru.size"
 )
 
 const (
-	DefaultSeedGrpcPort     = ports.SeedGrpcListenPort
-	DefaultRegistryAddr     = "registry"
-	DefaultRegistryGrpcPort = ports.RegistryGrpcListenPort
-	DefaultLruSize          = 10000
+	DefaultSeedGrpcPort         = ports.SeedGrpcListenPort
+	DefaultConfigServerAddr     = "config-server"
+	DefaultConfigServerGrpcPort = ports.ConfigServerGrpcListenPort
+	DefaultLruSize              = 10000
 )
 
 type Flags struct {
-	SeedGrpcPort     int
-	RegistryAddress  string
-	RegistryGrpcPort int
-	LruSize          int
+	SeedGrpcPort         int
+	ConfigServerAddress  string
+	ConfigServerGrpcPort int
+	LruSize              int
 }
 
 func AddFlags(flags *flag.FlagSet) {
-	flags.Int(seedGrpcPort, DefaultSeedGrpcPort, "Port to server gRPC of local gossip seed.")
-	flags.String(registryAddr, DefaultRegistryAddr, "IP or domain name of gossip registry.")
-	flags.Int(registryGrpcPort, DefaultRegistryGrpcPort, "Port to server gRPC of remote gossip registry.")
-	flags.Int(lruSize, DefaultLruSize, "Size of LRU for gossip message caching.")
+	flags.Int(seedGrpcPort, DefaultSeedGrpcPort, "[Gossip] Port to server gRPC of local gossip seed.")
+	flags.String(configServerAddr, DefaultConfigServerAddr, "[Gossip] IP or domain name of configuration server.")
+	flags.Int(configServerGrpcPort, DefaultConfigServerGrpcPort, "[Gossip] Port to serve gRPC for configuration server.")
+	flags.Int(lruSize, DefaultLruSize, "[Gossip] Size of LRU for gossip message caching.")
 }
 
 func (f *Flags) InitFromViper(v *viper.Viper) *Flags {
 	f.SeedGrpcPort = v.GetInt(seedGrpcPort)
-	f.RegistryAddress = v.GetString(registryAddr)
-	f.RegistryGrpcPort = v.GetInt(registryGrpcPort)
+	f.ConfigServerAddress = v.GetString(configServerAddr)
+	f.ConfigServerGrpcPort = v.GetInt(configServerGrpcPort)
 	f.LruSize = v.GetInt(lruSize)
 	return f
 }

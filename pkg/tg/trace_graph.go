@@ -198,12 +198,12 @@ func (t *traceGraph) GetIngresses(op *api_v1.Operation) ([]*api_v1.Operation, er
 	}
 }
 
-func (t *traceGraph) Traces(op *api_v1.Operation) ([]*api_v1.TraceNode, error) {
+func (t *traceGraph) Dependencies(op *api_v1.Operation) ([]*TraceNode, error) {
 	t.RLock()
 	defer t.RUnlock()
 
 	if t.has(op) {
-		traces := make([]*api_v1.TraceNode, 0)
+		traces := make([]*TraceNode, 0)
 
 		ingresses := make([]*api_v1.Operation, 0)
 		ingresses = t.searchIngresses(t.get(op), ingresses, set.NewSet())
@@ -222,6 +222,13 @@ func (t *traceGraph) Services() []string {
 	defer t.RUnlock()
 
 	return t.nodes.Services()
+}
+
+func (t *traceGraph) AllIngresses() []*api_v1.Operation {
+	t.RLock()
+	defer t.RUnlock()
+
+	return t.globalRoot.AllOut()
 }
 
 func (t *traceGraph) Operations(svc string) []string {
@@ -270,11 +277,11 @@ func (t *traceGraph) searchIngresses(n *node, result []*api_v1.Operation, hasSea
 	return result
 }
 
-func generateTrace(root *node) *api_v1.TraceNode {
+func generateTrace(root *node) *TraceNode {
 	if root != nil {
-		tn := &api_v1.TraceNode{
+		tn := &TraceNode{
 			Name:     fmt.Sprintf("%s:%s", root.operation.Service, root.operation.Operation),
-			Children: make([]*api_v1.TraceNode, 0),
+			Children: make([]*TraceNode, 0),
 		}
 		for _, outNode := range root.out.All() {
 			if ret := generateTrace(outNode); ret != nil {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package registry
 
 import (
 	"github.com/houyi-tracing/houyi/idl/api_v1"
@@ -25,6 +25,7 @@ import (
 type SeedSet interface {
 	Add(ip string, port int) int64
 	AllPeers(self int64) []*api_v1.Peer
+	AllSeeds() []*api_v1.Peer
 	GetNode(id int64) *api_v1.Peer
 	Has(id int64) bool
 	IsDead(id int64, life time.Duration) bool
@@ -141,6 +142,17 @@ func (s *seedSet) Update(id int64, ip string, port int) {
 		i.seed.Ip = ip
 		i.seed.Port = int64(port)
 	}
+}
+
+func (s *seedSet) AllSeeds() []*api_v1.Peer {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	ret := make([]*api_v1.Peer, 0)
+	for _, t := range s.m {
+		ret = append(ret, t.seed)
+	}
+	return ret
 }
 
 func (s *seedSet) newId() int64 {

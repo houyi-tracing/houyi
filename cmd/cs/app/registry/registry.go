@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package registry
 
 import (
 	"github.com/bwmarrin/snowflake"
-	"github.com/houyi-tracing/houyi/cmd/registry/app/handler"
-	"github.com/houyi-tracing/houyi/cmd/registry/app/server"
+	grpc2 "github.com/houyi-tracing/houyi/cmd/cs/app/handler/grpc"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 	"sync"
 	"time"
 )
@@ -31,52 +29,49 @@ var (
 )
 
 type registry struct {
-	options
-	logger      *zap.Logger
+	logger *zap.Logger
+
+	randomPick        int
+	probToR           float64
+	heartbeatInterval time.Duration
+
 	peers       SeedSet
-	grpcHandler *handler.GrpcHandler
-	grpcServer  *grpc.Server
+	grpcHandler *grpc2.RegistryGrpcHandler
 	stop        chan *sync.WaitGroup
 }
 
-func NewRegistry(logger *zap.Logger, opts ...Option) gossip.Registry {
+func NewRegistry(logger *zap.Logger, randomPick int, probToR float64, hbIntvl time.Duration) gossip.Registry {
 	r := &registry{
-		options: new(options).apply(opts...),
-		logger:  logger,
-		peers:   NewSeedSet(),
-		stop:    make(chan *sync.WaitGroup),
+		logger:            logger,
+		randomPick:        randomPick,
+		probToR:           probToR,
+		heartbeatInterval: hbIntvl,
+		peers:             NewSeedSet(),
+		stop:              make(chan *sync.WaitGroup),
 	}
 	return r
 }
 
 func (r *registry) Start() error {
 	r.logger.Info("Starting registry",
-		zap.Int("port", r.listenPort),
 		zap.Int("random pick", r.randomPick),
 		zap.Float64("probability to R", r.probToR),
-		zap.String("refresh interval", r.refreshInterval.String()))
+		zap.Duration("heartbeat interval", r.heartbeatInterval))
 
-	params := server.GrpcServerParams{
-		GrpcHandler:    handler.NewGrpcHandler(r.logger, r),
-		ListenPort:     r.listenPort,
-		Logger:         r.logger,
-		GossipRegistry: r,
-	}
-	if grpcServer, err := server.StartGrpcServer(&params); err != nil {
-		return err
-	} else {
-		r.grpcServer = grpcServer
-	}
-
-	go r.timer(r.removeDeadNodes, r.refreshInterval)
+	go r.timer(r.removeDeadNodes, r.heartbeatInterval)
 	return nil
 }
 
 func (r *registry) Stop() error {
-	if r.grpcServer != nil {
-		r.grpcServer.GracefulStop()
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	r.stop <- &wg
+	wg.Done()
 	return nil
+}
+
+func (r *registry) AllSeeds() []*api_v1.Peer {
+	return r.peers.AllSeeds()
 }
 
 func (r *registry) Register(ip string, port int) (int64, int, time.Duration, float64) {
@@ -85,7 +80,7 @@ func (r *registry) Register(ip string, port int) (int64, int, time.Duration, flo
 		zap.String("IP", ip),
 		zap.Int("port", port),
 		zap.Int64("node id", newNodeId))
-	return newNodeId, r.randomPick, r.refreshInterval, r.probToR
+	return newNodeId, r.randomPick, r.heartbeatInterval, r.probToR
 }
 
 func (r *registry) Heartbeat(id int64, ip string, port int) (int64, []*api_v1.Peer) {
@@ -119,7 +114,7 @@ func (r *registry) timer(f func(), interval time.Duration) {
 
 func (r *registry) removeDeadNodes() {
 	for _, id := range r.peers.AllIds() {
-		if r.peers.IsDead(id, r.refreshInterval) {
+		if r.peers.IsDead(id, r.heartbeatInterval) {
 			r.logger.Info("Removed dead seed",
 				zap.String("IP", r.peers.GetNode(id).Ip),
 				zap.Int64("port", r.peers.GetNode(id).Port),
