@@ -276,7 +276,7 @@ func (s *seed) register() error {
 	var conn *grpc.ClientConn
 	var err error
 	for {
-		conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure(), grpc.WithBlock())
+		conn, err = grpc.Dial(s.configServerEp.String(), grpc.WithInsecure())
 		if err != nil || conn == nil {
 			s.logger.Error("failed to dial to registry")
 			time.Sleep(time.Second * 5)

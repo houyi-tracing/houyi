@@ -130,7 +130,14 @@ func main() {
 				GrpcListenPort: cOpts.GrpcListenPort,
 			})
 
-			if err := c.Start(); err != nil {
+			if err = gossipSeed.Start(); err != nil {
+				logger.Fatal("failed to start gossip seed", zap.Error(err))
+				return err
+			} else {
+				logger.Info("Started gossip seed")
+			}
+
+			if err = c.Start(); err != nil {
 				logger.Fatal("Failed to start collector", zap.Error(err))
 				return err
 			} else {

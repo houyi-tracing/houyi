@@ -43,14 +43,21 @@ func NewStrategyManagerHttpHandler(params *StrategyManagerHttpHandlerParams) *St
 
 func (h *StrategyManagerHttpHandler) RegisterRoutes(c *gin.Engine) {
 	c.GET(route.GetStrategiesRoute, h.getStrategies)
+	c.GET(route.GetDefaultStrategyRoute, h.getDefaultStrategy)
+
 	c.POST(route.UpdateStrategiesRoute, h.updateStrategies)
+	c.POST(route.UpdateDefaultStrategyRoute, h.updateDefaultStrategy)
 }
 
 func (h *StrategyManagerHttpHandler) getStrategies(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
+	toResp := make([]*model.Strategy, 0)
+	for _, s := range h.store.GetAll() {
+		toResp = append(toResp, convertStrategyToJsonModel(s))
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"result": convertStrategyToJsonModel(h.store.GetAll()),
+		"result": toResp,
 	})
 }
 
@@ -59,79 +66,91 @@ func (h *StrategyManagerHttpHandler) updateStrategies(c *gin.Context) {
 
 	strategies := make([]*model.Strategy, 0)
 	if err := c.BindJSON(&strategies); err == nil {
-		h.store.UpdateAll(convertJsonModelToStrategy(strategies))
+		toUpdate := make([]*api_v1.PerOperationStrategy, 0)
+		for _, s := range strategies {
+			toUpdate = append(toUpdate, convertJsonModelToStrategy(s))
+		}
+		h.store.UpdateAll(toUpdate)
 		c.Status(http.StatusOK)
 	} else {
 		c.Status(http.StatusBadRequest)
 	}
 }
 
-func convertStrategyToJsonModel(strategies []*api_v1.PerOperationStrategy) []*model.Strategy {
-	ret := make([]*model.Strategy, 0)
+func (h *StrategyManagerHttpHandler) getDefaultStrategy(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-	for _, s := range strategies {
-		newS := &model.Strategy{
-			Service:   s.GetService(),
-			Operation: s.GetOperation(),
-		}
+	c.JSON(http.StatusOK, gin.H{
+		"result": convertStrategyToJsonModel(h.store.GetDefaultStrategy()),
+	})
+}
 
-		switch s.GetType() {
-		case api_v1.Type_CONST:
-			newS.Type = model.StrategyType_Const
-			newS.AlwaysSample = s.GetConst().GetAlwaysSample()
-		case api_v1.Type_PROBABILITY:
-			newS.Type = model.StrategyType_Probability
-			newS.SamplingRate = s.GetProbability().GetSamplingRate()
-		case api_v1.Type_RATE_LIMITING:
-			newS.Type = model.StrategyType_RateLimiting
-			newS.MaxTracesPerSecond = s.GetRateLimiting().GetMaxTracesPerSecond()
-		case api_v1.Type_ADAPTIVE:
-			newS.Type = model.StrategyType_Adaptive
-		case api_v1.Type_DYNAMIC:
-			newS.Type = model.StrategyType_Dynamic
-		}
+func (h *StrategyManagerHttpHandler) updateDefaultStrategy(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-		ret = append(ret, newS)
+	newOne := &model.Strategy{}
+	if err := c.BindJSON(newOne); err == nil {
+		h.store.SetDefaultStrategy(convertJsonModelToStrategy(newOne))
+		c.Status(http.StatusOK)
+	} else {
+		c.Status(http.StatusBadRequest)
+	}
+}
+
+func convertStrategyToJsonModel(s *api_v1.PerOperationStrategy) *model.Strategy {
+	ret := &model.Strategy{
+		Service:   s.GetService(),
+		Operation: s.GetOperation(),
+	}
+
+	switch s.GetType() {
+	case api_v1.Type_CONST:
+		ret.Type = model.StrategyType_Const
+		ret.AlwaysSample = s.GetConst().GetAlwaysSample()
+	case api_v1.Type_PROBABILITY:
+		ret.Type = model.StrategyType_Probability
+		ret.SamplingRate = s.GetProbability().GetSamplingRate()
+	case api_v1.Type_RATE_LIMITING:
+		ret.Type = model.StrategyType_RateLimiting
+		ret.MaxTracesPerSecond = s.GetRateLimiting().GetMaxTracesPerSecond()
+	case api_v1.Type_ADAPTIVE:
+		ret.Type = model.StrategyType_Adaptive
+	case api_v1.Type_DYNAMIC:
+		ret.Type = model.StrategyType_Dynamic
 	}
 
 	return ret
 }
 
-func convertJsonModelToStrategy(strategies []*model.Strategy) []*api_v1.PerOperationStrategy {
-	ret := make([]*api_v1.PerOperationStrategy, 0)
+func convertJsonModelToStrategy(s *model.Strategy) *api_v1.PerOperationStrategy {
+	ret := &api_v1.PerOperationStrategy{
+		Service:   s.Service,
+		Operation: s.Operation,
+	}
 
-	for _, s := range strategies {
-		newS := &api_v1.PerOperationStrategy{
-			Service:   s.Service,
-			Operation: s.Operation,
-		}
-
-		switch s.Type {
-		case model.StrategyType_Const:
-			newS.Type = api_v1.Type_CONST
-			newS.Strategy = &api_v1.PerOperationStrategy_Const{
-				Const: &api_v1.ConstSampling{
-					AlwaysSample: s.AlwaysSample,
-				}}
-		case model.StrategyType_Probability:
-			newS.Type = api_v1.Type_PROBABILITY
-			newS.Strategy = &api_v1.PerOperationStrategy_Probability{
-				Probability: &api_v1.ProbabilitySampling{
-					SamplingRate: s.SamplingRate,
-				}}
-		case model.StrategyType_RateLimiting:
-			newS.Type = api_v1.Type_RATE_LIMITING
-			newS.Strategy = &api_v1.PerOperationStrategy_RateLimiting{
-				RateLimiting: &api_v1.RateLimitingSampling{
-					MaxTracesPerSecond: s.MaxTracesPerSecond,
-				}}
-		case model.StrategyType_Adaptive:
-			newS.Type = api_v1.Type_ADAPTIVE
-		case model.StrategyType_Dynamic:
-			newS.Type = api_v1.Type_DYNAMIC
-		}
-
-		ret = append(ret, newS)
+	switch s.Type {
+	case model.StrategyType_Const:
+		ret.Type = api_v1.Type_CONST
+		ret.Strategy = &api_v1.PerOperationStrategy_Const{
+			Const: &api_v1.ConstSampling{
+				AlwaysSample: s.AlwaysSample,
+			}}
+	case model.StrategyType_Probability:
+		ret.Type = api_v1.Type_PROBABILITY
+		ret.Strategy = &api_v1.PerOperationStrategy_Probability{
+			Probability: &api_v1.ProbabilitySampling{
+				SamplingRate: s.SamplingRate,
+			}}
+	case model.StrategyType_RateLimiting:
+		ret.Type = api_v1.Type_RATE_LIMITING
+		ret.Strategy = &api_v1.PerOperationStrategy_RateLimiting{
+			RateLimiting: &api_v1.RateLimitingSampling{
+				MaxTracesPerSecond: s.MaxTracesPerSecond,
+			}}
+	case model.StrategyType_Adaptive:
+		ret.Type = api_v1.Type_ADAPTIVE
+	case model.StrategyType_Dynamic:
+		ret.Type = api_v1.Type_DYNAMIC
 	}
 
 	return ret

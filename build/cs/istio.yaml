@@ -7,7 +7,7 @@ spec:
     istio: ingressgateway
   servers:
     - port:
-        number: 21620
+        number: 80
         name: http
         protocol: HTTP
       hosts:
@@ -20,12 +20,29 @@ metadata:
   name: config-server
 spec:
   hosts:
-    - config-server
+    - "*"
   gateways:
     - config-server
   http:
     - match:
-        - port: 21620
+        - uri:
+            prefix: /getServices
+        - uri:
+            prefix: /getOperations
+        - uri:
+            prefix: /getCausalDependencies
+        - uri:
+            prefix: /updateEvaluator
+        - uri:
+            prefix: /getEvaluator
+        - uri:
+            prefix: /getStrategies
+        - uri:
+            prefix: /updateStrategies
+        - uri:
+            prefix: /getDefaultStrategy
+        - uri:
+            prefix: /updateDefaultStrategy
       route:
         - destination:
             host: config-server
