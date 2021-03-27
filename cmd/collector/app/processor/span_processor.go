@@ -171,6 +171,7 @@ func (sp *spanProcessor) parseSpan(span *model.Span) {
 		sp.opCh <- currOp
 	}
 	if !sp.traceGraph.Has(currOp) {
+		_ = sp.traceGraph.Add(currOp)
 		sp.seed.MongerNewOperation(currOp)
 	}
 
@@ -186,10 +187,13 @@ func (sp *spanProcessor) parseSpan(span *model.Span) {
 		From: parentOp,
 		To:   currOp,
 	}
+
 	if !sp.traceGraph.Has(parentOp) {
+		_ = sp.traceGraph.Add(parentOp)
 		sp.seed.MongerNewOperation(parentOp)
 	}
 	if !sp.traceGraph.HasRelation(rel) {
+		_ = sp.traceGraph.AddRelation(rel)
 		sp.seed.MongerNewRelation(rel)
 	}
 }

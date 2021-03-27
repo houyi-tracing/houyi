@@ -13,10 +13,10 @@ spec:
       name: gossip
     - port: 21520
       name: grpc
-    - port: 21620
+    - port: 80
       name: http
   selector:
-    app: registry
+    app: config-server
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -51,12 +51,16 @@ spec:
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
-              value: "debug"
+              value: "info"
+            - name: RANDOM_PICK
+              value: "5"
+            - name: PROB_TO_R
+              value: "0.25"
           ports:
             - containerPort: 22590
             - containerPort: 22650
             - containerPort: 21520
-            - containerPort: 21620
+            - containerPort: 80
           volumeMounts:
             - name: tmp
               mountPath: /tmp

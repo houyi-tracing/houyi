@@ -23,7 +23,7 @@ const (
 
 	// Configuration Server
 	ConfigServerGrpcListenPort = 21520 // port to server gRPC for ConfigurationServer.
-	ConfigServerHttpListenPort = 21620 // port to server gRPC for  ConfigurationServer.
+	ConfigServerHttpListenPort = 80    // port to server gRPC for  ConfigurationServer.
 
 	// Collector
 	CollectorGrpcListenPort = 14580

@@ -13,14 +13,13 @@ spec:
       hosts:
         - "*"
 ---
-
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: config-server
+  name: config-server-http
 spec:
   hosts:
-    - config-server
+    - "*"
   gateways:
     - config-server
   http:
@@ -47,7 +46,7 @@ spec:
         - destination:
             host: config-server
             port:
-              number: 21620
+              number: 80
             subset: v1
     - match:
         - port: 22590
@@ -57,6 +56,14 @@ spec:
             port:
               number: 22590
             subset: v1
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: config-server-tcp
+spec:
+  hosts:
+    - config-server
   tcp:
     - match:
         - port: 22600
@@ -75,7 +82,6 @@ spec:
               number: 21520
             subset: v1
 ---
-
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:

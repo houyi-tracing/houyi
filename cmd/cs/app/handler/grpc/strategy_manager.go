@@ -96,6 +96,7 @@ func (h *StrategyManagerGrpcHandler) GetStrategies(_ context.Context, request *a
 func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operation, isIngress bool) *api_v1.PerOperationStrategy {
 	if !h.tg.Has(opModel) {
 		h.gossipSeed.MongerNewOperation(opModel)
+		_ = h.tg.Add(opModel)
 	}
 
 	svc, op := opModel.GetService(), opModel.GetOperation()
@@ -110,6 +111,13 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 			}
 			sr, _ := h.sst.Generate(opModel)
 			qpsWeight := h.operationStore.QpsWeight(opModel)
+
+			h.logger.Debug("generate strategy",
+				zap.String("service", svc),
+				zap.String("operation", op),
+				zap.Float64("SST", sr),
+				zap.Float64("QPS weight", qpsWeight))
+
 			ret.Strategy = &api_v1.PerOperationStrategy_Dynamic{
 				Dynamic: &api_v1.DynamicSampling{
 					SamplingRate: math.Min(math.Max(sr*qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
@@ -123,6 +131,8 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 		} else {
 			return ret
 		}
+	} else {
+		_ = h.sst.Prune(opModel)
 	}
 
 	ret := h.strategyStore.GetDefaultStrategy()

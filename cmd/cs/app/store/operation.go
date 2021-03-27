@@ -17,6 +17,8 @@ package store
 import (
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/gossip"
+	"github.com/houyi-tracing/houyi/pkg/sst"
+	"github.com/houyi-tracing/houyi/pkg/tg"
 	"go.uber.org/zap"
 	"sync"
 	"time"
@@ -43,6 +45,8 @@ type opStore struct {
 	logger          *zap.Logger
 	m               map[string]map[string]*tItem
 	refreshInterval time.Duration
+	sst             sst.SamplingStrategyTree
+	tg              tg.TraceGraph
 	seed            gossip.Seed
 	stopChan        chan *sync.WaitGroup
 }
@@ -147,6 +151,8 @@ func (t *opStore) removeExpired() {
 				t.logger.Debug("monger expired operation",
 					zap.String("service", svc), zap.String("operation", op))
 
+				_ = t.sst.Prune(item.op)
+				_ = t.tg.Remove(item.op)
 				t.seed.MongerExpiredOperation(item.op)
 				delete(t.m[svc], op)
 				if len(t.m[svc]) == 0 {

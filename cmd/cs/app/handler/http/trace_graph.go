@@ -65,9 +65,9 @@ func (h *TraceGraphHttpHandler) getOperations(c *gin.Context) {
 			"result": h.tg.Operations(svc),
 		})
 	} else {
-		h.logger.Debug("getOperations: service is empty")
-
-		c.JSON(http.StatusBadRequest, gin.H{})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": "parameter service must be set",
+		})
 	}
 }
 
@@ -76,14 +76,19 @@ func (h *TraceGraphHttpHandler) getCausalDependencies(c *gin.Context) {
 
 	svc := c.Query("service")
 	op := c.Query("operation")
+
+	h.logger.Debug("getCausalDependencies", zap.String("service", svc), zap.String("operation", op))
+
 	if svc == "" {
-		h.logger.Debug("getEvaluatorTags: Empty service")
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": "parameter service must be set",
+		})
 		return
 	}
 	if op == "" {
-		h.logger.Debug("getEvaluatorTags: Empty operation")
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": "parameter operation must be set",
+		})
 		return
 	}
 
@@ -93,7 +98,9 @@ func (h *TraceGraphHttpHandler) getCausalDependencies(c *gin.Context) {
 	})
 	if err != nil {
 		h.logger.Error("failed to get dependencies", zap.Error(err))
-		c.Status(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"result": err.Error(),
+		})
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"result": dependencies,

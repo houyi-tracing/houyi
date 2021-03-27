@@ -207,6 +207,9 @@ func (t *traceGraph) Dependencies(op *api_v1.Operation) ([]*TraceNode, error) {
 
 		ingresses := make([]*api_v1.Operation, 0)
 		ingresses = t.searchIngresses(t.get(op), ingresses, set.NewSet())
+
+		t.logger.Debug("get dependencies", zap.Any("ingress", ingresses))
+
 		for _, e := range ingresses {
 			traces = append(traces, generateTrace(t.get(e)))
 		}

@@ -71,9 +71,13 @@ func (h *StrategyManagerHttpHandler) updateStrategies(c *gin.Context) {
 			toUpdate = append(toUpdate, convertJsonModelToStrategy(s))
 		}
 		h.store.UpdateAll(toUpdate)
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, gin.H{
+			"result": "OK",
+		})
 	} else {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": err.Error(),
+		})
 	}
 }
 
@@ -91,9 +95,13 @@ func (h *StrategyManagerHttpHandler) updateDefaultStrategy(c *gin.Context) {
 	newOne := &model.Strategy{}
 	if err := c.BindJSON(newOne); err == nil {
 		h.store.SetDefaultStrategy(convertJsonModelToStrategy(newOne))
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, gin.H{
+			"result": "OK",
+		})
 	} else {
-		c.Status(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": err.Error(),
+		})
 	}
 }
 

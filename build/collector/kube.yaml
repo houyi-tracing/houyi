@@ -52,10 +52,6 @@ spec:
               value: "133.133.135.38"
             - name: LOG_LEVEL
               value: "info"
-            - name: STRATEGY_MANAGER_ADDR
-              value: "sm"
-            - name: GOSSIP_REGISTRY_ADDR
-              value: "registry"
           ports:
             - containerPort: 22590
             - containerPort: 14580

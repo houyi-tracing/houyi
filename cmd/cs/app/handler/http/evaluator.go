@@ -79,11 +79,20 @@ func (h *EvaluatorHttpHandler) updateEvaluatorTags(c *gin.Context) {
 	if err == nil {
 		convertedTags := convertToTags(tags)
 		peers := h.registry.AllSeeds()
+		h.eval.Update(&api_v1.EvaluatingTags{
+			Tags: convertedTags,
+		})
 		for _, p := range peers {
 			h.doUpdate(p.GetIp(), p.GetPort(), convertedTags)
 		}
+		c.JSON(http.StatusOK, gin.H{
+			"result": "OK",
+		})
 	} else {
 		h.logger.Error("failed to parse JSON from request's body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": err.Error(),
+		})
 	}
 }
 
