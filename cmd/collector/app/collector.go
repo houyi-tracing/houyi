@@ -17,6 +17,7 @@ package app
 import (
 	"github.com/houyi-tracing/houyi/cmd/collector/app/processor"
 	"github.com/houyi-tracing/houyi/cmd/collector/app/server"
+	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -25,6 +26,7 @@ type CollectorParams struct {
 	Logger         *zap.Logger
 	GrpcListenPort int
 	SpanProcessor  processor.SpanProcessor
+	Evaluator      evaluator.Evaluator
 }
 
 type Collector struct {
@@ -32,6 +34,7 @@ type Collector struct {
 	grpcServer     *grpc.Server
 	grpcListenPort int
 	spanProcessor  processor.SpanProcessor
+	evaluator      evaluator.Evaluator
 }
 
 func NewCollector(params *CollectorParams) *Collector {
@@ -39,6 +42,7 @@ func NewCollector(params *CollectorParams) *Collector {
 		logger:         params.Logger,
 		spanProcessor:  params.SpanProcessor,
 		grpcListenPort: params.GrpcListenPort,
+		evaluator:      params.Evaluator,
 	}
 }
 
@@ -47,6 +51,7 @@ func (c *Collector) Start() error {
 		Logger:        c.logger,
 		ListenPort:    c.grpcListenPort,
 		SpanProcessor: c.spanProcessor,
+		Evaluator:     c.evaluator,
 	}); err != nil {
 		return err
 	} else {

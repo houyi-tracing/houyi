@@ -128,6 +128,7 @@ func main() {
 				Logger:         logger,
 				SpanProcessor:  sp,
 				GrpcListenPort: cOpts.GrpcListenPort,
+				Evaluator:      eval,
 			})
 
 			if err = gossipSeed.Start(); err != nil {
