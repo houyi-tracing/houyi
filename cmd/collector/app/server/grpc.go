@@ -41,7 +41,7 @@ func StartGrpcServer(params *GrpcServerParams) (*grpc.Server, error) {
 	}
 
 	server := grpc.NewServer()
-	if err := serveGrpc(server, lis, params); err != nil {
+	if err = serveGrpc(server, lis, params); err != nil {
 		return nil, err
 	} else {
 		return server, nil

@@ -98,7 +98,7 @@ func main() {
 				return err
 			}
 
-			operationStore := store.NewOperationStore(logger, csOpts.OperationExpire, gossipSeed)
+			operationStore := store.NewOperationStore(logger, csOpts.OperationExpire, gossipSeed, ssTree, traceGraph)
 
 			cs := app.NewConfigServer(&app.ConfigurationServerParams{
 				Logger:          logger,

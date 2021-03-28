@@ -99,6 +99,7 @@ func (h *EvaluatorHttpHandler) updateEvaluatorTags(c *gin.Context) {
 func (h *EvaluatorHttpHandler) doUpdate(ip string, port int64, tags []*api_v1.EvaluatingTag) {
 	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, port), grpc.WithInsecure())
 	if err != nil {
+		h.logger.Debug("failed to dail collector", zap.String("ip", ip), zap.Int64("port", port))
 		return
 	}
 	c := api_v1.NewEvaluatorManagerClient(conn)

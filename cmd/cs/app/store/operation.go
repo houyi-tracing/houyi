@@ -51,12 +51,18 @@ type opStore struct {
 	stopChan        chan *sync.WaitGroup
 }
 
-func NewOperationStore(logger *zap.Logger, interval time.Duration, seed gossip.Seed) OperationStore {
+func NewOperationStore(logger *zap.Logger,
+	interval time.Duration,
+	seed gossip.Seed,
+	sst sst.SamplingStrategyTree,
+	tg tg.TraceGraph) OperationStore {
 	return &opStore{
 		logger:          logger,
 		m:               make(map[string]map[string]*tItem),
 		refreshInterval: interval,
 		seed:            seed,
+		sst:             sst,
+		tg:              tg,
 		stopChan:        make(chan *sync.WaitGroup),
 	}
 }
