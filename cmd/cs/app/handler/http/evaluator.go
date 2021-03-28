@@ -22,6 +22,7 @@ import (
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/houyi-tracing/houyi/pkg/gossip"
+	"github.com/houyi-tracing/houyi/ports"
 	"github.com/houyi-tracing/houyi/route"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -83,7 +84,7 @@ func (h *EvaluatorHttpHandler) updateEvaluatorTags(c *gin.Context) {
 			Tags: convertedTags,
 		})
 		for _, p := range peers {
-			h.doUpdate(p.GetIp(), p.GetPort(), convertedTags)
+			h.doUpdate(p.GetIp(), convertedTags)
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"result": "OK",
@@ -96,10 +97,10 @@ func (h *EvaluatorHttpHandler) updateEvaluatorTags(c *gin.Context) {
 	}
 }
 
-func (h *EvaluatorHttpHandler) doUpdate(ip string, port int64, tags []*api_v1.EvaluatingTag) {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, port), grpc.WithInsecure())
+func (h *EvaluatorHttpHandler) doUpdate(ip string, tags []*api_v1.EvaluatingTag) {
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", ip, ports.CollectorGrpcListenPort), grpc.WithInsecure())
 	if err != nil {
-		h.logger.Debug("failed to dail collector", zap.String("ip", ip), zap.Int64("port", port))
+		h.logger.Debug("failed to dail collector", zap.String("ip", ip))
 		return
 	}
 	c := api_v1.NewEvaluatorManagerClient(conn)
