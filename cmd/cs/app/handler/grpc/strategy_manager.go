@@ -108,52 +108,52 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 		_ = h.tg.Add(opModel)
 	}
 
+	var ret *api_v1.PerOperationStrategy
+
 	svc, op := opModel.GetService(), opModel.GetOperation()
-	if isIngress {
-		ret := &api_v1.PerOperationStrategy{}
-		if !h.strategyStore.Has(svc, op) {
-			ret = h.strategyStore.GetDefaultStrategy()
-		} else {
-			ret, _ = h.strategyStore.Get(svc, op)
-		}
-
-		if ret.GetType() == api_v1.Type_DYNAMIC {
-			if !h.sst.Has(opModel) {
-				_ = h.sst.Add(opModel)
-			}
-			sr, _ := h.sst.Generate(opModel)
-			qpsWeight := h.operationStore.QpsWeight(opModel)
-			ret.Strategy = &api_v1.PerOperationStrategy_Dynamic{
-				Dynamic: &api_v1.DynamicSampling{
-					SamplingRate: math.Min(math.Max(sr*qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
-				}}
-			h.logger.Debug("Generated dynamic strategy",
-				zap.String("service", svc),
-				zap.String("operation", op),
-				zap.Float64("SST", sr),
-				zap.Float64("QPS weight", qpsWeight))
-		} else if ret.GetType() == api_v1.Type_ADAPTIVE {
-			qpsWeight := h.operationStore.QpsWeight(opModel)
-			ret.Strategy = &api_v1.PerOperationStrategy_Adaptive{
-				Adaptive: &api_v1.AdaptiveSampling{
-					SamplingRate: math.Min(math.Max(qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
-				}}
-			h.logger.Debug("Generated adaptive strategy",
-				zap.String("service", svc),
-				zap.String("operation", op),
-				zap.Float64("QPS weight", qpsWeight))
-		}
-		return ret
+	if h.strategyStore.Has(svc, op) && isIngress {
+		ret, _ = h.strategyStore.Get(svc, op)
 	} else {
-		if err := h.sst.Prune(opModel); err == nil {
-			h.logger.Debug("Removed non-ingress operation from SST.",
-				zap.String("service", svc),
-				zap.String("operation", op))
-		}
+		_ = h.sst.Prune(opModel)
+		_ = h.strategyStore.Remove(svc, op)
+		ret = h.strategyStore.GetDefaultStrategy()
 
-		ret := h.strategyStore.GetDefaultStrategy()
-		ret.Service = svc
-		ret.Operation = op
+		h.logger.Debug("Return default strategy",
+			zap.String("service", svc), zap.String("operation", op))
+	}
+
+	if ret.GetType() == api_v1.Type_DYNAMIC {
+		if !h.sst.Has(opModel) {
+			_ = h.sst.Add(opModel)
+		}
+		sr, _ := h.sst.Generate(opModel)
+		qpsWeight := h.operationStore.QpsWeight(opModel)
+		ret.Strategy = &api_v1.PerOperationStrategy_Dynamic{
+			Dynamic: &api_v1.DynamicSampling{
+				SamplingRate: math.Min(math.Max(sr*qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
+			}}
+		h.logger.Debug("Generated dynamic strategy",
+			zap.String("service", svc),
+			zap.String("operation", op),
+			zap.Float64("SST", sr),
+			zap.Float64("QPS weight", qpsWeight))
+	} else if ret.GetType() == api_v1.Type_ADAPTIVE {
+		qpsWeight := h.operationStore.QpsWeight(opModel)
+		ret.Strategy = &api_v1.PerOperationStrategy_Adaptive{
+			Adaptive: &api_v1.AdaptiveSampling{
+				SamplingRate: math.Min(math.Max(qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
+			}}
+		h.logger.Debug("Generated adaptive strategy",
+			zap.String("service", svc),
+			zap.String("operation", op),
+			zap.Float64("QPS weight", qpsWeight))
+	} else {
+		h.logger.Debug("Generated normal strategy",
+			zap.Any("strategy", ret))
 		return ret
 	}
+
+	ret.Service = svc
+	ret.Operation = op
+	return ret
 }

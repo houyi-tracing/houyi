@@ -23,6 +23,7 @@ const (
 // Trace Graph
 const (
 	GetServicesRoute           = "/getServices"
+	GetIngressServicesRoute    = "/getIngressServices"
 	GetOperationsRoute         = "/getOperations"
 	GetCausalDependenciesRoute = "/getCausalDependencies"
 )

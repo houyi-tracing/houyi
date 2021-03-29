@@ -46,6 +46,8 @@ spec:
             prefix: /getStrategy
         - uri:
             prefix: /updateStrategy
+        - uri:
+            prefix: /getIngressServices
       route:
         - destination:
             host: config-server

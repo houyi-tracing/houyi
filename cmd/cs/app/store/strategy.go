@@ -48,10 +48,10 @@ type strategyStore struct {
 func NewStrategyStore() StrategyStore {
 	return &strategyStore{
 		defaultStrategy: &api_v1.PerOperationStrategy{
-			Type: api_v1.Type_DYNAMIC,
-			Strategy: &api_v1.PerOperationStrategy_Dynamic{
-				Dynamic: &api_v1.DynamicSampling{
-					SamplingRate: 1.0,
+			Type: api_v1.Type_CONST,
+			Strategy: &api_v1.PerOperationStrategy_Const{
+				Const: &api_v1.ConstSampling{
+					AlwaysSample: true,
 				},
 			},
 		},

@@ -25,7 +25,3 @@ func TestConvert(t *testing.T) {
 	fmt.Println(IsInteger(-100.123))
 	fmt.Println(IsInteger(-100))
 }
-
-func IsInteger(n float64) bool {
-	return n-float64(int(n)) == 0
-}

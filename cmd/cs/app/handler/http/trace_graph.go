@@ -44,6 +44,7 @@ func (h *TraceGraphHttpHandler) RegisterRoutes(e *gin.Engine) {
 	e.GET(route.GetServicesRoute, h.getServices)
 	e.GET(route.GetOperationsRoute, h.getOperations)
 	e.GET(route.GetCausalDependenciesRoute, h.getCausalDependencies)
+	e.GET(route.GetIngressServicesRoute, h.getIngressServices)
 }
 
 func (h *TraceGraphHttpHandler) getServices(c *gin.Context) {
@@ -51,6 +52,18 @@ func (h *TraceGraphHttpHandler) getServices(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"result": h.tg.Services(),
+	})
+}
+
+func (h *TraceGraphHttpHandler) getIngressServices(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	services := make(map[string][]string)
+	for _, op := range h.tg.AllIngresses() {
+		services[op.Service] = append(services[op.Service], op.Operation)
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"result": services,
 	})
 }
 
@@ -106,12 +119,4 @@ func (h *TraceGraphHttpHandler) getCausalDependencies(c *gin.Context) {
 			"result": dependencies,
 		})
 	}
-}
-
-func (h *TraceGraphHttpHandler) getIngressServices(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
-	c.JSON(http.StatusOK, gin.H{
-		"result": h.tg.AllIngresses(),
-	})
 }
