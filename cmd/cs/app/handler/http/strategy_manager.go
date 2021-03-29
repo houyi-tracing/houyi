@@ -42,11 +42,73 @@ func NewStrategyManagerHttpHandler(params *StrategyManagerHttpHandlerParams) *St
 }
 
 func (h *StrategyManagerHttpHandler) RegisterRoutes(c *gin.Engine) {
+	c.GET(route.GetStrategyRoute, h.getStrategy)
 	c.GET(route.GetStrategiesRoute, h.getStrategies)
 	c.GET(route.GetDefaultStrategyRoute, h.getDefaultStrategy)
 
+	c.POST(route.UpdateStrategyRoute, h.updateStrategy)
 	c.POST(route.UpdateStrategiesRoute, h.updateStrategies)
 	c.POST(route.UpdateDefaultStrategyRoute, h.updateDefaultStrategy)
+}
+
+func (h *StrategyManagerHttpHandler) getStrategy(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	svc := c.Query("service")
+	op := c.Query("operation")
+
+	if svc == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": "parameter service must be set",
+		})
+		return
+	}
+	if op == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": "parameter operation must be set",
+		})
+	}
+
+	if h.store.Has(svc, op) {
+		ret, _ := h.store.Get(svc, op)
+		c.JSON(http.StatusOK, gin.H{
+			"result": convertStrategyToJsonModel(ret),
+		})
+
+		h.logger.Debug("Get Strategy", zap.Any("strategy", ret))
+	} else {
+		ret := convertStrategyToJsonModel(h.store.GetDefaultStrategy())
+		ret.Service = svc
+		ret.Operation = op
+		ret.Type = model.StrategyType_Default
+		c.JSON(http.StatusOK, gin.H{
+			"result": ret,
+		})
+
+		h.logger.Debug("Get Default Strategy", zap.Any("strategy", ret))
+	}
+}
+
+func (h *StrategyManagerHttpHandler) updateStrategy(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	strategy := &model.Strategy{}
+	if err := c.BindJSON(strategy); err == nil {
+		if strategy.Type == model.StrategyType_Default {
+			_ = h.store.Remove(strategy.Service, strategy.Operation)
+		} else {
+			h.store.Update(strategy.Service, strategy.Operation, convertJsonModelToStrategy(strategy))
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"result": "OK",
+		})
+
+		h.logger.Debug("Updated strategy", zap.Any("strategy", strategy))
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"result": err.Error(),
+		})
+	}
 }
 
 func (h *StrategyManagerHttpHandler) getStrategies(c *gin.Context) {

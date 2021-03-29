@@ -16,6 +16,7 @@ package model
 
 const (
 	StrategyType_Const        = "const"
+	StrategyType_Default      = "default"
 	StrategyType_Probability  = "probability"
 	StrategyType_RateLimiting = "rate-limiting"
 	StrategyType_Adaptive     = "adaptive"

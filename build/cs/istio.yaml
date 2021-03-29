@@ -42,6 +42,10 @@ spec:
             prefix: /getDefaultStrategy
         - uri:
             prefix: /updateDefaultStrategy
+        - uri:
+            prefix: /getStrategy
+        - uri:
+            prefix: /updateStrategy
       route:
         - destination:
             host: config-server

@@ -16,7 +16,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"github.com/houyi-tracing/houyi/cmd/cs/app/store"
 	"github.com/houyi-tracing/houyi/idl/api_v1"
 	"github.com/houyi-tracing/houyi/pkg/evaluator"
@@ -71,7 +70,17 @@ func (h *StrategyManagerGrpcHandler) Promote(_ context.Context, request *api_v1.
 		err := h.sst.Promote(request)
 		return reply, err
 	} else {
-		return reply, fmt.Errorf("can not promote operation which is not entry operation")
+		if ingress, err := h.tg.GetIngresses(request); err != nil {
+			return reply, err
+		} else {
+			for _, i := range ingress {
+				h.logger.Debug("Promoted operation",
+					zap.String("service", i.GetService()),
+					zap.String("operation", i.GetOperation()))
+				err = h.sst.Promote(i)
+			}
+			return reply, err
+		}
 	}
 }
 
@@ -101,42 +110,50 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 
 	svc, op := opModel.GetService(), opModel.GetOperation()
 	if isIngress {
+		ret := &api_v1.PerOperationStrategy{}
 		if !h.strategyStore.Has(svc, op) {
-			h.strategyStore.Add(svc, op, h.strategyStore.GetDefaultStrategy())
+			ret = h.strategyStore.GetDefaultStrategy()
+		} else {
+			ret, _ = h.strategyStore.Get(svc, op)
 		}
-		ret, _ := h.strategyStore.Get(svc, op)
+
 		if ret.GetType() == api_v1.Type_DYNAMIC {
 			if !h.sst.Has(opModel) {
 				_ = h.sst.Add(opModel)
 			}
 			sr, _ := h.sst.Generate(opModel)
 			qpsWeight := h.operationStore.QpsWeight(opModel)
-
-			h.logger.Debug("generate strategy",
-				zap.String("service", svc),
-				zap.String("operation", op),
-				zap.Float64("SST", sr),
-				zap.Float64("QPS weight", qpsWeight))
-
 			ret.Strategy = &api_v1.PerOperationStrategy_Dynamic{
 				Dynamic: &api_v1.DynamicSampling{
 					SamplingRate: math.Min(math.Max(sr*qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
 				}}
+			h.logger.Debug("Generated dynamic strategy",
+				zap.String("service", svc),
+				zap.String("operation", op),
+				zap.Float64("SST", sr),
+				zap.Float64("QPS weight", qpsWeight))
 		} else if ret.GetType() == api_v1.Type_ADAPTIVE {
 			qpsWeight := h.operationStore.QpsWeight(opModel)
 			ret.Strategy = &api_v1.PerOperationStrategy_Adaptive{
 				Adaptive: &api_v1.AdaptiveSampling{
 					SamplingRate: math.Min(math.Max(qpsWeight*h.scaleFactor, h.minSamplingRate), 1.0),
 				}}
-		} else {
-			return ret
+			h.logger.Debug("Generated adaptive strategy",
+				zap.String("service", svc),
+				zap.String("operation", op),
+				zap.Float64("QPS weight", qpsWeight))
 		}
+		return ret
 	} else {
-		_ = h.sst.Prune(opModel)
-	}
+		if err := h.sst.Prune(opModel); err == nil {
+			h.logger.Debug("Removed non-ingress operation from SST.",
+				zap.String("service", svc),
+				zap.String("operation", op))
+		}
 
-	ret := h.strategyStore.GetDefaultStrategy()
-	ret.Service = svc
-	ret.Operation = op
-	return ret
+		ret := h.strategyStore.GetDefaultStrategy()
+		ret.Service = svc
+		ret.Operation = op
+		return ret
+	}
 }

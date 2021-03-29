@@ -200,11 +200,21 @@ func convertToTags(tags []model.Tag) []*api_v1.EvaluatingTag {
 			newTag.ValueType = api_v1.EvaluatingTag_INTEGER
 			newTag.Value = &api_v1.EvaluatingTag_IntegerVal{IntegerVal: int64(val)}
 		case float64:
-			newTag.ValueType = api_v1.EvaluatingTag_FLOAT
-			newTag.Value = &api_v1.EvaluatingTag_FloatVal{FloatVal: val}
+			if IsInteger(val) {
+				newTag.ValueType = api_v1.EvaluatingTag_INTEGER
+				newTag.Value = &api_v1.EvaluatingTag_IntegerVal{IntegerVal: int64(val)}
+			} else {
+				newTag.ValueType = api_v1.EvaluatingTag_FLOAT
+				newTag.Value = &api_v1.EvaluatingTag_FloatVal{FloatVal: val}
+			}
 		case float32:
-			newTag.ValueType = api_v1.EvaluatingTag_FLOAT
-			newTag.Value = &api_v1.EvaluatingTag_FloatVal{FloatVal: float64(val)}
+			if Is32Integer(val) {
+				newTag.ValueType = api_v1.EvaluatingTag_INTEGER
+				newTag.Value = &api_v1.EvaluatingTag_IntegerVal{IntegerVal: int64(val)}
+			} else {
+				newTag.ValueType = api_v1.EvaluatingTag_FLOAT
+				newTag.Value = &api_v1.EvaluatingTag_FloatVal{FloatVal: float64(val)}
+			}
 		case string:
 			newTag.ValueType = api_v1.EvaluatingTag_STRING
 			newTag.Value = &api_v1.EvaluatingTag_StringVal{StringVal: val}
@@ -216,4 +226,12 @@ func convertToTags(tags []model.Tag) []*api_v1.EvaluatingTag {
 		ret = append(ret, newTag)
 	}
 	return ret
+}
+
+func IsInteger(n float64) bool {
+	return n-float64(int(n)) == 0
+}
+
+func Is32Integer(n float32) bool {
+	return n-float32(int(n)) == 0
 }

@@ -136,7 +136,6 @@ func (cs *ConfigurationServer) Start() error {
 }
 
 func (cs *ConfigurationServer) Stop() error {
-	_ = cs.gossipRegistry.Stop()
 	_ = cs.gossipSeed.Stop()
 	cs.opStore.Stop()
 	cs.grpcServer.GracefulStop()

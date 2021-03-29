@@ -29,6 +29,8 @@ const (
 
 // Strategy Manager
 const (
+	GetStrategyRoute           = "/getStrategy"
+	UpdateStrategyRoute        = "/updateStrategy"
 	GetStrategiesRoute         = "/getStrategies"
 	UpdateStrategiesRoute      = "/updateStrategies"
 	GetDefaultStrategyRoute    = "/getDefaultStrategy"
