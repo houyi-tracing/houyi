@@ -154,7 +154,7 @@ func (t *opStore) removeExpired() {
 	for svc, opMap := range t.m {
 		for op, item := range opMap {
 			if item.upSince.Add(t.refreshInterval).Before(now) {
-				t.logger.Debug("monger expired operation",
+				t.logger.Info("monger expired operation",
 					zap.String("service", svc), zap.String("operation", op))
 
 				_ = t.sst.Prune(item.op)

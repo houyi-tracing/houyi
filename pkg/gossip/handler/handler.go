@@ -16,7 +16,6 @@ package handler
 
 import (
 	"github.com/houyi-tracing/houyi/idl/api_v1"
-	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/houyi-tracing/houyi/pkg/tg"
 	"go.uber.org/zap"
 )
@@ -24,14 +23,12 @@ import (
 type Handler struct {
 	logger *zap.Logger
 	tg     tg.TraceGraph
-	eval   evaluator.Evaluator
 }
 
-func NewHandler(logger *zap.Logger, tg tg.TraceGraph, eval evaluator.Evaluator) *Handler {
+func NewHandler(logger *zap.Logger, tg tg.TraceGraph) *Handler {
 	return &Handler{
 		logger: logger,
 		tg:     tg,
-		eval:   eval,
 	}
 }
 
@@ -72,10 +69,4 @@ func (h *Handler) NewOperationHandler(op *api_v1.Operation) {
 			h.logger.Error("failed to add new operation for trace graph", zap.Error(err))
 		}
 	}
-}
-
-func (h *Handler) TagsHandler(tags *api_v1.EvaluatingTags) {
-	h.logger.Debug("Handle new evaluating tags", zap.String("evaluating tags", tags.String()))
-
-	h.eval.Update(tags)
 }

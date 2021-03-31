@@ -56,6 +56,10 @@ spec:
               value: "5"
             - name: PROB_TO_R
               value: "0.25"
+            - name: SCALE_FACTOR
+              value: "10"
+            - name: MIN_SAMPLING_RATE
+              value: "0.01"
           ports:
             - containerPort: 22590
             - containerPort: 22650

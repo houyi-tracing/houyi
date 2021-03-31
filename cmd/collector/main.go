@@ -88,7 +88,6 @@ func main() {
 					Port: seedOpts.ConfigServerGrpcPort,
 				},
 				TraceGraph: traceGraph,
-				Evaluator:  eval,
 			})
 			if err != nil {
 				return err

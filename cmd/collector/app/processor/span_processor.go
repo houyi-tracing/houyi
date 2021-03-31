@@ -213,7 +213,7 @@ func (sp *spanProcessor) strategyManagerClient() {
 func (sp *spanProcessor) promoteOperation(op *api_v1.Operation) {
 	conn, err := grpc.Dial(sp.strategyManagerEndpoint.String(), grpc.WithInsecure(), grpc.WithBlock())
 	if conn == nil || err != nil {
-		sp.logger.Fatal("Could not dial to strategy manager",
+		sp.logger.Error("Could not dial to strategy manager",
 			zap.String("address", sp.strategyManagerEndpoint.String()))
 	} else {
 		defer conn.Close()
@@ -224,7 +224,7 @@ func (sp *spanProcessor) promoteOperation(op *api_v1.Operation) {
 	defer cancel()
 
 	req := op
-	if _, err := c.Promote(ctx, req); err != nil {
+	if _, err = c.Promote(ctx, req); err != nil {
 		sp.logger.Error("Failed to send promote request to strategy manager", zap.Error(err))
 	} else {
 		sp.logger.Debug("Received promote reply from strategy manager",

@@ -15,7 +15,6 @@
 package server
 
 import (
-	"github.com/houyi-tracing/houyi/pkg/evaluator"
 	"github.com/houyi-tracing/houyi/pkg/gossip"
 	"github.com/houyi-tracing/houyi/pkg/gossip/handler"
 	"github.com/houyi-tracing/houyi/pkg/gossip/seed"
@@ -30,7 +29,6 @@ type SeedParams struct {
 	LruSize              int
 	ConfigServerEndpoint *routing.Endpoint
 	TraceGraph           tg.TraceGraph
-	Evaluator            evaluator.Evaluator
 }
 
 func BuildSeed(params *SeedParams) (gossip.Seed, error) {
@@ -40,11 +38,10 @@ func BuildSeed(params *SeedParams) (gossip.Seed, error) {
 		seed.Options.LruSize(params.LruSize),
 		seed.Options.ConfigServerEndpoint(params.ConfigServerEndpoint))
 
-	gHandler := handler.NewHandler(params.Logger, params.TraceGraph, params.Evaluator)
+	gHandler := handler.NewHandler(params.Logger, params.TraceGraph)
 
 	s.OnNewOperation(gHandler.NewOperationHandler)
 	s.OnExpiredOperation(gHandler.ExpiredOperationHandler)
-	s.OnEvaluatingTags(gHandler.TagsHandler)
 	s.OnNewRelation(gHandler.RelationHandler)
 
 	return s, nil

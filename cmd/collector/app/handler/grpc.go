@@ -54,7 +54,7 @@ func (g *GrpcHandler) PostSpans(_ context.Context, request *api_v2.PostSpansRequ
 }
 
 func (g *GrpcHandler) UpdateTags(_ context.Context, request *api_v1.UpdateTagsRequest) (*api_v1.NullRely, error) {
-	g.logger.Debug("Received request to updateEvaluatorTags", zap.Any("tags", request.GetTags()))
+	g.logger.Info("Received request to updateEvaluatorTags", zap.Any("tags", request.GetTags()))
 
 	g.eval.Update(&api_v1.EvaluatingTags{
 		Tags: request.GetTags(),

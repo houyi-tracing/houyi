@@ -83,15 +83,6 @@ func TestMessageMongering(t *testing.T) {
 				l.Unlock()
 			}
 
-			tagsHandler := func(tags *api_v1.EvaluatingTags) {
-				l.Lock()
-				if _, has := msgCnt[id]; !has {
-					msgCnt[id] = make(map[int]int)
-				}
-				msgCnt[id][1]++
-				l.Unlock()
-			}
-
 			opHandler := func(op *api_v1.Operation) {
 				l.Lock()
 				if _, has := msgCnt[id]; !has {
@@ -105,7 +96,6 @@ func TestMessageMongering(t *testing.T) {
 				Options.ConfigServerEndpoint(registryEndpoint),
 				Options.ListenPort(28991+id),
 				Options.OnNewRelation(relHandler))
-			s.OnEvaluatingTags(tagsHandler)
 			s.OnExpiredOperation(opHandler)
 			_ = s.Start()
 		}(i, msgReceivedCnt, lock)
@@ -128,15 +118,6 @@ func TestMessageMongering(t *testing.T) {
 			Operation: "op7",
 		},
 	})
-	s.MongerEvaluatingTags(&api_v1.EvaluatingTags{
-		Tags: []*api_v1.EvaluatingTag{
-			{
-				TagName:       "",
-				OperationType: 0,
-				ValueType:     0,
-				Value:         nil,
-			},
-		}})
 	s.MongerExpiredOperation(&api_v1.Operation{
 		Service:   "s",
 		Operation: "o",

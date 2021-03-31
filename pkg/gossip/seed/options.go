@@ -26,7 +26,6 @@ type options struct {
 	onNewRelation      func(rel *api_v1.Relation)
 	onNewOperation     func(op *api_v1.Operation)
 	onExpiredOperation func(op *api_v1.Operation)
-	onEvaluatingTags   func(tags *api_v1.EvaluatingTags)
 }
 
 type Option func(opts *options)
@@ -69,12 +68,6 @@ func (options) OnExpiredOperation(f func(op *api_v1.Operation)) Option {
 	}
 }
 
-func (options) OnFilterTags(f func(tags *api_v1.EvaluatingTags)) Option {
-	return func(opts *options) {
-		opts.onEvaluatingTags = f
-	}
-}
-
 func (o options) apply(opts ...Option) options {
 	ret := options{}
 	for _, op := range opts {
@@ -97,11 +90,6 @@ func (o options) apply(opts ...Option) options {
 	}
 	if ret.onExpiredOperation == nil {
 		ret.onExpiredOperation = func(op *api_v1.Operation) {
-			// do nothing
-		}
-	}
-	if ret.onEvaluatingTags == nil {
-		ret.onEvaluatingTags = func(tags *api_v1.EvaluatingTags) {
 			// do nothing
 		}
 	}

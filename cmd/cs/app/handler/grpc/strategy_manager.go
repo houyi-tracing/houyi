@@ -111,18 +111,33 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 	var ret *api_v1.PerOperationStrategy
 
 	svc, op := opModel.GetService(), opModel.GetOperation()
+	h.logger.Debug("Operation info",
+		zap.String("service", svc), zap.String("operation", op), zap.Bool("isIngress", isIngress))
+
 	if h.strategyStore.Has(svc, op) && isIngress {
 		ret, _ = h.strategyStore.Get(svc, op)
 	} else {
-		_ = h.sst.Prune(opModel)
-		_ = h.strategyStore.Remove(svc, op)
+		if !isIngress {
+			if err := h.sst.Prune(opModel); err != nil {
+				h.logger.Debug("failed to remove operation from SST",
+					zap.String("service", svc),
+					zap.String("operation", op),
+					zap.Bool("isIngress", isIngress))
+			}
+			if err := h.strategyStore.Remove(svc, op); err != nil {
+				h.logger.Debug("failed to remove operation from strategy store",
+					zap.String("service", svc),
+					zap.String("operation", op),
+					zap.Bool("isIngress", isIngress))
+			}
+		}
 		ret = h.strategyStore.GetDefaultStrategy()
 
 		h.logger.Debug("Return default strategy",
-			zap.String("service", svc), zap.String("operation", op))
+			zap.String("service", svc), zap.String("operation", op), zap.Bool("isIngress", isIngress))
 	}
 
-	if ret.GetType() == api_v1.Type_DYNAMIC {
+	if ret.GetType() == api_v1.Type_DYNAMIC && isIngress {
 		if !h.sst.Has(opModel) {
 			_ = h.sst.Add(opModel)
 		}
@@ -137,7 +152,7 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 			zap.String("operation", op),
 			zap.Float64("SST", sr),
 			zap.Float64("QPS weight", qpsWeight))
-	} else if ret.GetType() == api_v1.Type_ADAPTIVE {
+	} else if ret.GetType() == api_v1.Type_ADAPTIVE && isIngress {
 		qpsWeight := h.operationStore.QpsWeight(opModel)
 		ret.Strategy = &api_v1.PerOperationStrategy_Adaptive{
 			Adaptive: &api_v1.AdaptiveSampling{
@@ -147,11 +162,10 @@ func (h *StrategyManagerGrpcHandler) perOperationStrategy(opModel *api_v1.Operat
 			zap.String("service", svc),
 			zap.String("operation", op),
 			zap.Float64("QPS weight", qpsWeight))
-	} else {
-		h.logger.Debug("Generated normal strategy",
-			zap.Any("strategy", ret))
-		return ret
 	}
+
+	h.logger.Debug("Generated Strategy",
+		zap.Any("strategy", ret))
 
 	ret.Service = svc
 	ret.Operation = op

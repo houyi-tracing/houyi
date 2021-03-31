@@ -85,35 +85,11 @@ func (s *seed) OnExpiredOperation(f func(op *api_v1.Operation)) {
 	s.onExpiredOperation = f
 }
 
-func (s *seed) OnEvaluatingTags(f func(tags *api_v1.EvaluatingTags)) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.onEvaluatingTags = f
-}
-
 func (s *seed) OnNewOperation(f func(op *api_v1.Operation)) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
 	s.onNewOperation = f
-}
-
-func (s *seed) MongerEvaluatingTags(tags *api_v1.EvaluatingTags) {
-	msg := &api_v1.Message{
-		MsgId:   s.msgIdGenerator.Generate().Int64(),
-		MsgType: api_v1.Message_EVALUATING_TAGS,
-		Msg: &api_v1.Message_EvaluateTags{
-			EvaluateTags: tags,
-		},
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	if s.grpcHandler != nil {
-		_, _ = s.grpcHandler.Sync(ctx, msg)
-	} else {
-		s.logger.Error("Grpc handler does not ready")
-	}
 }
 
 func (s *seed) MongerExpiredOperation(op *api_v1.Operation) {

@@ -55,10 +55,6 @@ type Seed interface {
 	// operation and process it.
 	OnExpiredOperation(func(op *api_v1.Operation))
 
-	// OnEvaluatingTags sets function that would be invoked when gossip seed received a message carrying evaluating tags
-	// process it.
-	OnEvaluatingTags(func(tags *api_v1.EvaluatingTags))
-
 	// MongerNewRelation activates message mongering to synchronize new relations between gossip seeds.
 	MongerNewRelation(rel *api_v1.Relation)
 
@@ -67,7 +63,4 @@ type Seed interface {
 
 	// MongerExpiredOperation activates message mongering to synchronize expired operations between gossip seeds.
 	MongerExpiredOperation(op *api_v1.Operation)
-
-	// MongerEvaluatingTags activates message mongering to synchronize evaluating tags between gossip seeds.
-	MongerEvaluatingTags(tags *api_v1.EvaluatingTags)
 }

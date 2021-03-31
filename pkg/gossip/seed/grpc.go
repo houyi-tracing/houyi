@@ -74,8 +74,6 @@ func (g *grpcHandler) Sync(_ context.Context, msg *api_v1.Message) (*api_v1.Null
 			defer s.onNewOperation(msg.GetOperation())
 		case api_v1.Message_EXPIRED_OPERATION:
 			defer s.onExpiredOperation(msg.GetOperation())
-		case api_v1.Message_EVALUATING_TAGS:
-			defer s.onEvaluatingTags(msg.GetEvaluateTags())
 		default:
 			g.logger.Error("Unsupported type of message")
 		}
