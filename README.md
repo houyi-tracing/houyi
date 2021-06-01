@@ -10,7 +10,7 @@ dynamic sampling to make biased sampling decision for different executions (norm
 
 ### Client
 
-Client is the instrumentation code which is embedded in the microservice code to record the process and details of the request processing by the microservice. Details related to single request is called **Span**.
+[Client](https://github.com/houyi-tracing/houyi-client-go) is the instrumentation code which is embedded in the microservice code to record the process and details of the request processing by the microservice. Details related to single request is called **Span**.
 
 A span contains:
 
